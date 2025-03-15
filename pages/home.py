@@ -26,7 +26,8 @@ home_layout = html.Div([
         # Añadir un nuevo botón "Dashboard" junto a "Get Recommendations"
         dbc.Row([
             dbc.Col(dbc.Button("🎧 Get Recommendations", href="/recommendations", color="primary", size="lg"), width={"size": 6, "offset": 3}),
-            dbc.Col(dbc.Button("📊 Dashboard", href="/dashboard", color="secondary", size="lg"), width={"size": 6, "offset": 0})
+            dbc.Col(dbc.Button("📊 Dashboard", href="/dashboard", color="secondary", size="lg"), width={"size": 6, "offset": 0}),
+            dbc.Col(dbc.Button("Generator", href="/generator", color="secondary", size="lg"), width={"size": 6, "offset": 0})
         ], className="mb-4 text-center"),
 
         html.Hr(),

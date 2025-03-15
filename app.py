@@ -1,9 +1,11 @@
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
-from recommendations import recommendations_layout
-from home import home_layout
-from dashboard import dashboard_layout
+from pages.recommendations import recommendations_layout
+from pages.home import home_layout
+from pages.dashboard import dashboard_layout
+from pages.generator import generator_layout
+from pages.tryingg import tryingg_layout
 
 app = Dash(
     __name__, 
@@ -14,7 +16,7 @@ app = Dash(
 
 # Asignar el layout de la aplicación
 app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),  # Para controlar las rutas
+    dcc.Location(id='url', refresh=False),  # Para controlar las rutas 
     html.Div(id='page-content')  # Aquí se mostrará el contenido de cada página
 ])
 
@@ -23,13 +25,18 @@ app.layout = html.Div([
     Output('page-content', 'children'),
     Input('url', 'pathname')
 )
+
+
 def display_page(pathname):
-    if pathname == '/recommendations':
-        return recommendations_layout  # Redirige a la página de recomendaciones
-    elif pathname == '/dashboard':  # Agrega la ruta para el dashboard
-        return dashboard_layout  # Redirige a la página de dashboard
-    else:
-        return home_layout  # Página de inicio por defecto
+    match pathname:
+        case '/recommendations':
+            return recommendations_layout  # Redirige a la página de recomendaciones
+        case '/dashboard':  # Agrega la ruta para el dashboard
+                return dashboard_layout  # Redirige a la página de dashboard
+        case '/generator':
+              return generator_layout #Redirige a la página de generador de lista musical
+        case _:
+                return home_layout  # Página de inicio por defecto
 
 if __name__ == '__main__':
     app.run_server(debug=True)

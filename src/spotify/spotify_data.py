@@ -95,3 +95,22 @@ def get_top_podcasts():
     ]
 
     return podcasts[:5] if podcasts else [{"name": "No podcast data available!", "link": "#"}]
+
+def search_track(track_name, limit=5):
+    sp = get_spotify_client()
+    results = sp.search(q=track_name, type="track", limit=limit)
+    tracks = results["tracks"]["items"]
+
+    if not tracks:
+        print("No se ha encontrado la cancion.")
+        return
+    
+    for idx, track in enumerate(tracks):
+        artists = ", ".join([artist["name"] for artist in track["artists"]])
+        print(f"{idx+1}. 🎵 {track['name']} - {artists}")
+        print(f"   🔗 Spotify URL: {track['external_urls']['spotify']}")
+        print(f"   📀 Album: {track['album']['name']}")
+        print("-" * 50)
+
+# Example: Search for "The Weeknd"
+# search_artist("The Weekend")
