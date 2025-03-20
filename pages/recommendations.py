@@ -16,7 +16,7 @@ recommendations_layout = html.Div([
         ], className="mb-4"),
 
         dbc.Row([
-            dbc.Col(html.Label("¿How are you feeling today? 😊"), width=12, className="text-center")
+            dbc.Col(html.Label("How are you feeling today? 😊"), width=12, className="text-center")
         ], className="mb-2"),
 
         dbc.Row([

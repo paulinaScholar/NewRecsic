@@ -3,6 +3,9 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 from src.spotify.spotify_data import get_top_genres, get_music_trivia, get_top_podcasts, get_listening_days
+from dash_bootstrap_templates import load_figure_template
+
+load_figure_template(["PULSE"])
 
 # Obtener datos desde Spotify API
 top_genres = get_top_genres()
@@ -16,14 +19,15 @@ days, counts = (list(listening_days.keys()), list(listening_days.values())) if l
 # Gráfico de días más escuchados
 listening_days_graph = {
     "data": [go.Bar(x=days, y=counts, marker=dict(color="blue"))],
-    "layout": go.Layout(title="Listening Habits 📆", xaxis_title="Day", yaxis_title="Songs Played", height=400)
+    "layout": go.Layout(title="Listening Habits 📆", xaxis_title="Day", yaxis_title="Songs Played", height=400, template="PULSE")
 }
 # 🎵 Sección de Géneros principales
 genres_graph = px.pie(
     names=[genre["name"] for genre in top_genres],
     values=[genre["count"] for genre in top_genres],
     title="Top Music Genres 🎼",
-    hole=0.3
+    hole=0.3,
+    template="PULSE",
 )
 
 # 📌 Layout de la página Dashboard

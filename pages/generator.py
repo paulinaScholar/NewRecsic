@@ -11,7 +11,7 @@ generator_layout = html.Div([
 
         dbc.Row([       #Input Song
             dbc.Col([dcc.Input(id="input-generate", type="text", 
-                    placeholder="Type the title of a song", debounce=True, required=True, autoFocus=True,
+                    placeholder="Type the title of a song", debounce=True, autoFocus=True,
                     style={'marginRight':'10px', 'width': '100%', 'margin-bottom': '10px'})
             ])
         ]),

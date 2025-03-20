@@ -5,11 +5,11 @@ from pages.recommendations import recommendations_layout
 from pages.home import home_layout
 from pages.dashboard import dashboard_layout
 from pages.generator import generator_layout
-from pages.tryingg import tryingg_layout
+from pages.navbar import navbar
 
 app = Dash(
     __name__, 
-    external_stylesheets=[dbc.themes.BOOTSTRAP], 
+    external_stylesheets=[dbc.themes.PULSE], 
     suppress_callback_exceptions=True,
     title="Recsic 🎵"
 )
@@ -17,6 +17,7 @@ app = Dash(
 # Asignar el layout de la aplicación
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),  # Para controlar las rutas 
+    navbar,
     html.Div(id='page-content')  # Aquí se mostrará el contenido de cada página
 ])
 
@@ -25,7 +26,6 @@ app.layout = html.Div([
     Output('page-content', 'children'),
     Input('url', 'pathname')
 )
-
 
 def display_page(pathname):
     match pathname:
