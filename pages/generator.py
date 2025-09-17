@@ -1,58 +1,3 @@
-<<<<<<< HEAD
-from dash import html, dcc, callback, Input, Output
-import dash_bootstrap_components as dbc
-from src.spotify.spotify_data import search_track
-
-#Layout página de generador de lista de canciones 
-generator_layout = html.Div([
-    dbc.Container([
-        dbc.Row([
-            dbc.Col(html.H1("Escribe una canción"), width=12, className="text/center")
-        ], className="mb-4"),
-
-        dbc.Row([       #Input Song
-            dbc.Col([dcc.Input(id="input-generate", type="text", 
-                    placeholder="Type the title of a song", debounce=True, autoFocus=True,
-                    style={'marginRight':'10px', 'width': '100%', 'margin-bottom': '10px'})
-            ])
-        ]),
-
-        dbc.Row([
-            dbc.Col(html.Div(id='generate-list'))   #Prueba para mostrar lista 
-        ]),
-
-        dbc.Row([
-            dbc.Col(dbc.Button("Generate", id="generate-button", n_clicks=0, color="primary", className="btn-lg"),
-                    width=12, className="text-center")
-        ], className='mb-4'),
-
-        html.Div(id="generate-list"),
-
-        dbc.Row([         # Volver a Home
-            dbc.Col(dbc.Button("🏠 Home", href="/", color="secondary", className="btn-lg"), width=12, className="text-center")
-        ], className="mb-4")
-    ], className="mt-4")
-])
-
-#Callback para obtener lista de canciones similares
-@callback(
-    Output("generate-list", "children"),
-    Input("generate-button", "n_clicks"),
-    Input("input-generate", "value")
-)
-
-    # Muestra titulo de la canción al presionar boton
-def update_generator(n_clicks, valueSong):
-    songInput = ""
-    if n_clicks:
-        songInput = valueSong
-        return[
-            search_track(songInput),
-            dbc.Row([dbc.Col(html.H4("Found Tracks 🎤"), width=12, className="text-center")], className="mb-3"),
-            dbc.Row([dbc.Col(songInput)]),
-        ]
-    return []
-=======
 from dash import html, dcc, callback, Input, Output, State
 import dash_bootstrap_components as dbc
 import pandas as pd
@@ -66,6 +11,7 @@ metricas = ["danceability", "energy", "speechiness", "acousticness",
 
 df = df.dropna(subset=metricas)
 df.drop_duplicates(inplace=True)
+
 
 def recommend_by_metrics(usuario_input, exacto=False, top_n=10):
     df_copy = df.copy()
@@ -83,6 +29,7 @@ def recommend_by_metrics(usuario_input, exacto=False, top_n=10):
 
     return resultados[["trackName", "artistName"] + metricas]
 
+
 generator_layout = dbc.Container([
     dbc.Row([
         dbc.Col(dbc.Card([
@@ -91,6 +38,7 @@ generator_layout = dbc.Container([
 
                 html.P("Busca una canción y revisa sus métricas:", className="text-center"),
 
+                # Campos separados para Canción y Artista
                 dbc.Row([
                     dbc.Col([
                         dbc.InputGroup([
@@ -112,13 +60,14 @@ generator_layout = dbc.Container([
                                        color="info", className="btn-lg w-100")),
                 ], className="mb-4 text-center"),
 
-                html.Div(id="song-metrics"),
+                html.Div(id="song-metrics"),  # Aquí se mostrarán las métricas de la canción
 
                 html.Hr(),
 
                 html.P("Ajusta los valores de las métricas para encontrar canciones similares:",
                        className="text-center"),
 
+                # Sliders para métricas
                 dbc.Row([
                     dbc.Col([
                         html.Label("Danceability"),
@@ -171,6 +120,9 @@ generator_layout = dbc.Container([
     ], className="mt-5 justify-content-center")
 ], className="d-flex justify-content-center")
 
+# ----------------------------
+# Callback para mostrar métricas de la canción
+# ----------------------------
 @callback(
     Output("song-metrics", "children"),
     Input("search-song", "n_clicks"),
@@ -181,14 +133,17 @@ def show_song_metrics(n_clicks, song_name, artist_name):
     if not n_clicks or not song_name:
         return ""
 
+    # Filtrar por canción
     resultados = df[df["trackName"].str.contains(song_name, case=False, na=False)]
 
+    # Si también puso artista, filtrar aún más
     if artist_name:
         resultados = resultados[resultados["artistName"].str.contains(artist_name, case=False, na=False)]
 
     if resultados.empty:
         return dbc.Alert("⚠️ No se encontró esa canción en el dataset.", color="warning")
 
+    # Mostrar coincidencias
     return dbc.Table(
         [
             html.Thead(html.Tr([html.Th("Canción"), html.Th("Artista")] + [html.Th(m) for m in metricas])),
@@ -206,6 +161,9 @@ def show_song_metrics(n_clicks, song_name, artist_name):
         className="mt-3"
     )
 
+# ----------------------------
+# Callback para recomendaciones
+# ----------------------------
 @callback(
     Output("generate-list", "children"),
     Input("generate-button", "n_clicks"),
@@ -254,4 +212,3 @@ def update_generator(n_clicks, danceability, energy, valence, tempo, exact_match
         responsive=True,
         className="mt-4"
     )
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from .spotify_auth import get_spotify_client
 import datetime
 import random
@@ -18,26 +17,6 @@ def get_listening_days():
 
         return listening_counts
     return {}
-=======
-from datetime import datetime
-from collections import Counter
-from .spotify_auth import get_spotify_client
-
-def get_listening_days():
-    sp = get_spotify_client()
-    results = sp.current_user_recently_played(limit=50)
-    days = []
-
-    for item in results['items']:
-        played_at = item['played_at']
-        try:
-            date_obj = datetime.strptime(played_at, "%Y-%m-%dT%H:%M:%S.%fZ")
-        except ValueError:
-            date_obj = datetime.strptime(played_at, "%Y-%m-%dT%H:%M:%SZ")
-        days.append(date_obj.strftime("%A"))
-
-    return dict(Counter(days))
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)
 
 def get_recently_played():
     sp = get_spotify_client()
@@ -68,10 +47,7 @@ def get_top_artists():
         return artists
     return []
 
-<<<<<<< HEAD
 # 🔹 Obtener los géneros principales
-=======
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)
 def get_top_genres():
     sp = get_spotify_client()
     results = sp.current_user_top_artists(limit=20)  
@@ -87,10 +63,7 @@ def get_top_genres():
 
     return []
 
-<<<<<<< HEAD
 # 🔹 Obtener trivia divertida sobre el historial musical
-=======
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)
 def get_music_trivia():
     sp = get_spotify_client()
     results = sp.current_user_top_tracks(limit=50)  
@@ -101,29 +74,17 @@ def get_music_trivia():
         least_popular = min(results["items"], key=lambda x: x["popularity"])["name"]
 
         trivia = [
-<<<<<<< HEAD
-            f"You've listened to {int(total_duration)} minutes of music from your top 50 tracks! 🎵",
-            f"Your most popular track is '{most_popular}' 🌟",
-            f"Your hidden gem is '{least_popular}', not everyone knows about it! 🎶",
-            f"You have a unique taste! Some of your tracks aren't even in the top charts! 🎧"
-=======
             f"ESCUCHASTE UN TOTAL DE {int(total_duration)} MINUTOS DE PARTE DE TU TOP 50 🎵",
             f"TU CANCION MAS POPULAR ES '{most_popular}' 🌟",
             f"TU GEMA OCULTA ES'{least_popular}', NADIE SABE DE ELLA! 🎶",
             f"TIENES UN EXCELENTE GUSTO, ESCUCHAS JOYAS QUE NO APARECEN EN LOS TOP 50 🎧"
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)
         ]
 
         return trivia
 
-<<<<<<< HEAD
     return ["We need more data to generate fun facts! Keep listening to more music! 🎶"]
 
 # 🔹 Obtener los podcasts más escuchados
-=======
-    return ["NECESITAMOS MAS DATOS PARA PODER AYUDARTE, SIGUE ESCUCHANDO MUSICA!🎶"]
-
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)
 def get_top_podcasts():
     sp = get_spotify_client()
     results = sp.current_user_top_artists(limit=10)  
@@ -133,11 +94,7 @@ def get_top_podcasts():
         for artist in results["items"] if "podcast" in artist["genres"]
     ]
 
-<<<<<<< HEAD
     return podcasts[:5] if podcasts else [{"name": "No podcast data available!", "link": "#"}]
-=======
-    return podcasts[:5] if podcasts else [{"name": "NO HAY DATOS DE PODCAST!", "link": "#"}]
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)
 
 def search_track(track_name, limit=5):
     sp = get_spotify_client()
@@ -153,11 +110,7 @@ def search_track(track_name, limit=5):
         print(f"{idx+1}. 🎵 {track['name']} - {artists}")
         print(f"   🔗 Spotify URL: {track['external_urls']['spotify']}")
         print(f"   📀 Album: {track['album']['name']}")
-<<<<<<< HEAD
         print("-" * 50)
 
 # Example: Search for "The Weeknd"
 # search_artist("The Weekend")
-=======
-        print("-" * 50)
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)

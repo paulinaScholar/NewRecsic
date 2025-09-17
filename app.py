@@ -5,24 +5,15 @@ from pages.recommendations import recommendations_layout
 from pages.home import home_layout
 from pages.dashboard import dashboard_layout
 from pages.generator import generator_layout
-<<<<<<< HEAD
 from pages.navbar import navbar
 
 app = Dash(
     __name__, 
     external_stylesheets=[dbc.themes.PULSE], 
-=======
-#from pages.tryingg import tryingg_layout
-
-app = Dash(
-    __name__, 
-    external_stylesheets=[dbc.themes.BOOTSTRAP], 
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)
     suppress_callback_exceptions=True,
     title="Recsic 🎵"
 )
 
-<<<<<<< HEAD
 # Asignar el layout de la aplicación
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),  # Para controlar las rutas 
@@ -31,22 +22,11 @@ app.layout = html.Div([
 ])
 
 # Callback para cambiar el contenido según la ruta
-=======
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),  # Para controlar las rutas 
-    html.Div(id='page-content')  # Aquí se mostrará el contenido de cada página
-])
-
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)
 @app.callback(
     Output('page-content', 'children'),
     Input('url', 'pathname')
 )
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)
 def display_page(pathname):
     match pathname:
         case '/recommendations':
@@ -59,11 +39,4 @@ def display_page(pathname):
                 return home_layout  # Página de inicio por defecto
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-    app.run_server(debug=True)
-=======
     app.run(debug=True)
-
->>>>>>> 116654978 (Gran actualizacion del proyecto Recsic)
-
-
