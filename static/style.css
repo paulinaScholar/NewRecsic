@@ -1,0 +1,237 @@
+/* Estilos generales */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+}
+
+/* Contenedor principal */
+.login-container, .inicio-container, .registro-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Estilos del logo */
+.logo-container {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.logo {
+    width: 150px;
+    height: auto;
+}
+
+/* Caja de login */
+.login-box, .registro-box {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 300px;
+    text-align: center;
+}
+
+.login-box h2, .registro-box h2 {
+    color: #6f42c1; /* Color morado */
+    margin-bottom: 20px;
+}
+
+/* Campos de formulario */
+input[type="text"], input[type="password"], input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+}
+
+input[type="submit"], .button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 4px;
+    border: none;
+    background-color: #6f42c1; /* Color morado */
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+input[type="submit"]:hover, .button:hover {
+    background-color: #5a32a1; /* Morado más oscuro */
+}
+
+/* Estilos de los botones (cerrar sesión y perfil) */
+.header-buttons {
+    display: flex;
+    flex-direction: column;  /* Coloca los botones uno debajo del otro */
+    align-items: center;     /* Centra los botones horizontalmente */
+    gap: 20px;               /* Espacio de 20px entre los botones */
+    width: 300px;            /* Controla el ancho de los botones */
+    margin-top: 20px;
+}
+
+/* Estilos del mensaje de bienvenida */
+.welcome-message h2 {
+    color: #333;
+}
+
+.welcome-message p {
+    color: #777;
+    font-size: 18px;
+}
+
+/* Botones en la página de inicio */
+.button {
+    padding: 12px;
+    border-radius: 4px;
+    border: none;
+    background-color: #6f42c1; /* Color morado */
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: #5a32a1; /* Morado más oscuro */
+}
+
+/* Estilos para el perfil */
+.profile-title {
+    color: #6f42c1; /* Morado */
+    font-size: 32px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.profile-info {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.profile-info ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.profile-info li {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.profile-info b {
+    color: #6f42c1; /* Morado */
+}
+
+/* Estilo para la página de registro */
+.registro-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.registro-box {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 300px;
+    text-align: center;
+}
+
+.registro-box h2 {
+    color: #6f42c1; /* Color morado */
+    margin-bottom: 20px;
+}
+
+.registro-box label {
+    font-size: 14px;
+    color: #333;
+    text-align: left;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.registro-box input[type="text"],
+.registro-box input[type="password"],
+.registro-box input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+}
+
+.registro-box input[type="submit"], .registro-box .button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 4px;
+    border: none;
+    background-color: #6f42c1; /* Color morado */
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.registro-box input[type="submit"]:hover, .registro-box .button:hover {
+    background-color: #5a32a1; /* Morado más oscuro */
+}
+
+.registro-box a button {
+    background-color: #6f42c1; /* Morado */
+    color: white;
+    border: none;
+    padding: 12px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+}
+
+.registro-box a button:hover {
+    background-color: #5a32a1; /* Morado más oscuro */
+}
+
+/* Contenedor del botón de regreso */
+.header-buttons {
+    display: flex;
+    justify-content: center;  /* Centra el botón horizontalmente */
+    margin-top: 10px;         /* Espacio entre el botón y la parte superior */
+    width: 80%;
+}
+
+/* Botón de regresar */
+.volver {
+    padding: 12px;
+    border-radius: 4px;
+    border: none;
+    background-color: #6f42c1; /* Color morado */
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    width: auto;               /* Ajusta el tamaño del botón */
+}
+
+.volver:hover {
+    background-color: #5a32a1; /* Morado más oscuro */
+}
