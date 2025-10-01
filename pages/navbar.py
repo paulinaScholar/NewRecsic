@@ -7,11 +7,11 @@ navbar = dbc.Navbar(
         dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
         dbc.Collapse(
             dbc.Nav([
-                dbc.NavItem(dbc.NavLink("Home", href="/", active=True)),
-                dbc.NavItem(dbc.NavLink("Generator", href="/generator")),
-                dbc.NavItem(dbc.NavLink("Recommendations", href="/recommendations")),
+                dbc.NavItem(dbc.NavLink("Inicio", href="/", active=True)),
+                dbc.NavItem(dbc.NavLink("Generador", href="/generator")),
+                dbc.NavItem(dbc.NavLink("Recomendaciones", href="/recommendations")),
                 dbc.NavItem(dbc.NavLink("Dashboard", href="/dashboard")),
-                dbc.NavItem(dbc.NavLink("Profile", href="#")),
+                dbc.NavItem(dbc.NavLink("Perfil", href="perfil")),
             ], className="ms-auto"),
         id="navbar-collapse",
         navbar=True

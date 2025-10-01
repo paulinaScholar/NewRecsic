@@ -1,0 +1,86 @@
+import dash
+from dash import html, dcc
+from dash.dependencies import Input, Output, State
+
+app = dash.Dash(__name__, suppress_callback_exceptions=True)
+
+app.layout = html.Div(
+    className="login-container",
+    children=[
+        # Logo
+        html.Div(
+            className="logo-container",
+            children=[
+                html.Img(
+                    src="/assets/Recsic-09.png",  # put your logo inside the /assets folder
+                    className="logo",
+                    alt="Logo"
+                )
+            ]
+        ),
+        # Login box
+        html.Div(
+            className="login-box",
+            children=[
+                html.H2("Inicia sesión"),
+                html.Div(id="msg", className="msg"),  # feedback message
+
+                html.Div(
+                    children=[
+                        # Nombre de usuario
+                        html.Label("Nombre de usuario", htmlFor="usuario"),
+                        dcc.Input(
+                            id="usuario",
+                            type="text",
+                            placeholder="Nombre de usuario",
+                            required=True,
+                        ),
+                        html.Br(), html.Br(),
+
+                        # Contraseña
+                        html.Label("Contraseña", htmlFor="contraseña"),
+                        dcc.Input(
+                            id="contraseña",
+                            type="password",
+                            placeholder="Contraseña",
+                            required=True,
+                        ),
+                        html.Br(), html.Br(),
+
+                        # Botones
+                        html.Div(
+                            className="form-buttons",
+                            children=[
+                                html.A(
+                                    html.Button("Crear cuenta", type="button", className="button"),
+                                    href="/registro"  # replace with a page/route in Dash
+                                ),
+                                html.Button("Iniciar sesión", id="login-btn", className="button", n_clicks=0),
+                            ]
+                        )
+                    ]
+                )
+            ]
+        )
+    ]
+)
+
+# Callback to handle login
+@app.callback(
+    Output("msg", "children"),
+    Input("login-btn", "n_clicks"),
+    State("usuario", "value"),
+    State("contraseña", "value"),
+    prevent_initial_call=True
+)
+def login(n_clicks, usuario, contraseña):
+    if usuario == "admin" and contraseña == "1234":  # Example validation
+        return "✅ Inicio de sesión exitoso"
+    else:
+        return "❌ Usuario o contraseña incorrectos"
+
+
+
+
+msg is updated dynamically with a callback instead of Flask template variables like {{ msg }}.
+

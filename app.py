@@ -5,6 +5,10 @@ from pages.recommendations import recommendations_layout
 from pages.home import home_layout
 from pages.dashboard import dashboard_layout
 from pages.generator import generator_layout
+from pages.login import login_layout
+from pages.registro import registro_layout
+from pages.inicio import inicio_layout
+from pages.perfil import perfil_layout
 from pages.navbar import navbar
 
 app = Dash(
@@ -21,7 +25,6 @@ app.layout = html.Div([
     html.Div(id='page-content')  # Aquí se mostrará el contenido de cada página
 ])
 
-# Callback para cambiar el contenido según la ruta
 @app.callback(
     Output('page-content', 'children'),
     Input('url', 'pathname')
@@ -35,6 +38,14 @@ def display_page(pathname):
                 return dashboard_layout  # Redirige a la página de dashboard
         case '/generator':
               return generator_layout #Redirige a la página de generador de lista musical
+        case '/login':
+              return login_layout # Redirige a la página de inicio de sesión
+        case '/registro':
+              return registro_layout # Redirige a la página de inicio de sesión
+        case '/inicio':
+              return inicio_layout # Redirige a la página de inicio de sesión
+        case '/perfil':
+              return perfil_layout # Redirige a la página de inicio de sesión
         case _:
                 return home_layout  # Página de inicio por defecto
 
