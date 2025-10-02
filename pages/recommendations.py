@@ -16,7 +16,7 @@ recommendations_layout = html.Div([
         ], className="mb-4"),
 
         dbc.Row([
-            dbc.Col(html.Label("How are you feeling today? 😊"), width=12, className="text-center")
+            dbc.Col(html.Label("¿Cómo te sientes hoy? 😊"), width=12, className="text-center")
         ], className="mb-2"),
 
         dbc.Row([
@@ -28,13 +28,13 @@ recommendations_layout = html.Div([
         ], className="mb-4"),
 
         dbc.Row([
-            dbc.Col(dbc.Button("🎵 Get recommendation", id="recommend-button", n_clicks=0, color="primary", className="btn-lg"), width=12, className="text-center")
+            dbc.Col(dbc.Button("🎵 Obtener recomendaciones", id="recommend-button", n_clicks=0, color="primary", className="btn-lg"), width=12, className="text-center")
         ], className="mb-4"),
 
         html.Hr(),
 
         dbc.Row([
-            dbc.Col(html.H3("Recommended Songs 🎧"), width=12, className="text-center")
+            dbc.Col(html.H3("Canciones Recomendadas  🎧"), width=12, className="text-center")
         ], className="mb-4"),
 
         dbc.Row([
