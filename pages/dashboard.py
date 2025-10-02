@@ -4,7 +4,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from src.spotify.spotify_data import (
     get_top_genres, 
-    #get_music_trivia, 
     get_top_podcasts, 
     get_listening_days,
     get_listening_hours,
@@ -13,9 +12,7 @@ from src.spotify.spotify_data import (
     get_song_playcount
 )
 
-# Datos desde Spotify
 top_genres = get_top_genres()
-#trivia_facts = get_music_trivia()
 top_podcasts = get_top_podcasts()
 listening_days = get_listening_days()
 listening_hours = get_listening_hours()
@@ -90,13 +87,6 @@ dashboard_layout = html.Div([
                     ), width=12),
                 ]),
                 html.Hr(),
-                # Trivia musical
-                dbc.Row([
-                    dbc.Col(html.H3("Trivia musical!", className="text-center"), width=12),
-                    dbc.Col(html.Div(id="trivia-container", className="text-center text-muted mb-3"), width=12),
-                    dbc.Col(dbc.Button("Random Trivia", id="trivia-button", color="primary", className="mt-2"), width=12, className="text-center")
-                ]),
-                html.Hr(),
                 # Top podcasts
                 dbc.Row([
                     dbc.Col(html.H3("Top Podcasts", className="text-center"), width=12),
@@ -110,13 +100,3 @@ dashboard_layout = html.Div([
         dbc.Row([dbc.Col(dbc.Button("Inicio", href="/", color="secondary", className="mt-3"), width=12, className="text-center")])
     ], className="p-4")
 ])
-
-# # Callback para trivia
-# @callback(
-#     Output("trivia-container", "children"),
-#     Input("trivia-button", "n_clicks")
-# )
-# def show_random_trivia(n_clicks):
-#     if n_clicks:
-#         return html.P(f"{trivia_facts[n_clicks % len(trivia_facts)]}", style={"fontSize": "18px", "fontStyle": "italic"})
-#     return html.P("Selecciona el botón para un dato curioso!", style={"fontSize": "18px", "fontStyle": "italic"})
