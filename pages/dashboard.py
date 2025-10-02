@@ -1,4 +1,4 @@
-from dash import html, dcc, callback, Input, Output 
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
@@ -20,14 +20,12 @@ top_artist_today = get_top_artist_today()
 monthly_listening = get_monthly_listening()
 song_playcount = get_song_playcount()
 
-# Gráfico de hábitos por días
 days, counts = (list(listening_days.keys()), list(listening_days.values())) if listening_days else ([], [])
 listening_days_graph = {
     "data": [go.Bar(x=days, y=counts, marker=dict(color="#1DB954"))],
     "layout": go.Layout(title="Hábitos musicales", xaxis_title="Día", yaxis_title="Canciones escuchadas", height=400)
 }
 
-# Gráfico de géneros
 genres_graph = px.pie(
     names=[genre["name"] for genre in top_genres],
     values=[genre["count"] for genre in top_genres],
@@ -36,7 +34,6 @@ genres_graph = px.pie(
     color_discrete_sequence=px.colors.sequential.Blues
 )
 
-# Heatmap de horas
 if listening_hours:
     heatmap_fig = px.imshow(
         listening_hours,
@@ -49,49 +46,122 @@ if listening_hours:
 else:
     heatmap_fig = go.Figure()
 
-# Layout del Dashboard
 dashboard_layout = html.Div([
     dbc.Container([
-        dbc.Row([dbc.Col(html.H1("Spotify Dashboard", className="text-center text-white bg-dark p-4 mb-4 rounded"), width=12)]),
+        dbc.Row([dbc.Col(
+            html.H1("Spotify Dashboard", className="text-center text-white bg-dark p-4 mb-4 rounded"), width=12
+        )]),
 
         dbc.Row([dbc.Col(dbc.Card([
             dbc.CardHeader("Dashboard Overview", className="bg-primary text-white"),
             dbc.CardBody([
-                # Gráficos principales
                 dbc.Row([
                     dbc.Col(dcc.Graph(figure=genres_graph), width=6, className="col-md-12"),
-                    dbc.Col(dcc.Graph(figure=listening_days_graph), width=6,  className="col-md-12")
+                    dbc.Col(dcc.Graph(figure=listening_days_graph), width=6, className="col-md-12")
                 ]),
                 html.Hr(),
-                # Heatmap
+
+                dbc.Row([dbc.Col(dcc.Graph(figure=heatmap_fig), width=12)]),
+                html.Hr(),
+
                 dbc.Row([
-                    dbc.Col(dcc.Graph(figure=heatmap_fig), width=12)
+                    dbc.Col(html.H3("Estadísticas Detalladas", className="text-center mb-4"), width=12),
+
+                    # Card 1: Top Artist Today
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody([
+                                html.H5("Artista del día", className="card-title"),
+                                html.P(
+                                    f"{top_artist_today['artist']} - {top_artist_today['minutes']} minutos escuchados" 
+                                    if top_artist_today["artist"] else "Hoy no escuchaste música",
+                                    className="card-text"
+                                )
+                            ]),
+                            className="shadow mb-3"
+                        ),
+                        md=4
+                    ),
+
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody([
+                                html.H5("Escucha mensual", className="card-title"),
+                                html.P(f"{monthly_listening} minutos de música este mes", className="card-text")
+                            ]),
+                            className="shadow mb-3"
+                        ),
+                        md=4
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody([
+                                html.H5("Canción más escuchada", className="card-title"),
+                                html.P(
+                                    f"'{song_playcount['song']}' - {song_playcount['count']} reproducciones" 
+                                    if song_playcount["song"] else "No hay canción destacada todavía",
+                                    className="card-text"
+                                )
+                            ]),
+                            className="shadow mb-3"
+                        ),
+                        md=4
+                    ),
                 ]),
                 html.Hr(),
-                # Estadísticas personalizadas
+                dbc.Row(
+                    className="justify-content-center my-5",
+                    children=[
+                        dbc.Col(
+                            html.Div(
+                                style={
+                                    "background-image": "url('/static/disco.png')",
+                                    "background-size": "cover",
+                                    "background-position": "center",
+                                    "height": "650px",
+                                    "border-radius": "20px",
+                                    "position": "relative",
+                                    "display": "flex",
+                                    "align-items": "center",
+                                    "justify-content": "center",
+                                    "color": "white",
+                                    "text-shadow": "2px 2px 5px rgba(0,0,0,0.8)",
+                                    "box-shadow": "0 8px 20px rgba(0,0,0,0.5)"
+                                },
+                                children=[
+                                    html.Div(
+                                        [
+                                            html.H2("Mi Álbum Musical", className="fw-bold text-center mb-3"),
+                                            html.H4(
+                                                f"Artista del día: {top_artist_today['artist']}" 
+                                                if top_artist_today["artist"] else "Hoy no escuchaste música",
+                                                className="text-center"
+                                            ),
+                                            html.H5(f"Escucha mensual: {monthly_listening} minutos", className="text-center"),
+                                            html.H5(
+                                                f"Canción más escuchada: '{song_playcount['song']}' ({song_playcount['count']} reproducciones)"
+                                                if song_playcount["song"] else "No hay canción destacada",
+                                                className="text-center"
+                                            ),
+                                        ],
+                                        style={
+                                            "background-color": "rgba(0, 0, 0, 0.5)",
+                                            "padding": "25px",
+                                            "border-radius": "15px"
+                                        }
+                                    )
+                                ]
+                            ),
+                            md=8
+                        )
+                    ]
+                ),
+
                 dbc.Row([
-                    dbc.Col(html.H3("Estadísticas Detalladas", className="text-center"), width=12),
-                    dbc.Col(html.P(
-                        f"Hoy escuchaste a {top_artist_today['artist']} {top_artist_today['minutes']} minutos" 
-                        if top_artist_today["artist"] else "Hoy no escuchaste música",
-                        className="text-center"
-                    ), width=12),
-                    dbc.Col(html.P(
-                        f"Este mes llevas {monthly_listening} minutos de música",
-                        className="text-center"
-                    ), width=12),
-                    dbc.Col(html.P(
-                        f"La canción más escuchada fue '{song_playcount['song']}' con {song_playcount['count']} reproducciones"
-                        if song_playcount["song"] else "No hay canción destacada todavía",
-                        className="text-center"
-                    ), width=12),
-                ]),
-                html.Hr(),
-                # Top podcasts
-                dbc.Row([
-                    dbc.Col(html.H3("Top Podcasts", className="text-center"), width=12),
+                    dbc.Col(html.H3("Top Podcasts", className="text-center mb-3"), width=12),
                     dbc.Col(html.Ul([
-                        html.Li(html.A(podcast["name"], href=podcast["link"], target="_blank", className="text-decoration-none text-primary")) for podcast in top_podcasts
+                        html.Li(html.A(podcast["name"], href=podcast["link"], target="_blank", className="text-decoration-none text-primary")) 
+                        for podcast in top_podcasts
                     ]), width=12)
                 ])
             ])
