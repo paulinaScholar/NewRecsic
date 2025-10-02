@@ -6,10 +6,12 @@ inicio_layout = dbc.Container(
     fluid=True,
     className="inicio-container",
     children=[
+        # HEADER
         dbc.Row(
             className="header align-items-center py-3 px-4",
-            style={"background-color": "#f5f6fa"},
+            style={"background-color": "#f5f6fa"}, 
             children=[
+                # Logo
                 dbc.Col(
                     html.Div(
                         html.Img(
@@ -23,8 +25,10 @@ inicio_layout = dbc.Container(
                     width="auto"
                 ),
 
+                # Espaciador
                 dbc.Col(),
 
+                # Botones Perfil y Logout
                 dbc.Col(
                     html.Div(
                         [
@@ -48,6 +52,7 @@ inicio_layout = dbc.Container(
             ]
         ),
 
+        # HERO SECTION
         dbc.Row(
             className="hero align-items-center text-center my-5 py-5 px-3",
             style={"background": "linear-gradient(to right, #ffffff, #dbe6fd)", "border-radius": "15px"},
@@ -130,8 +135,8 @@ inicio_layout = dbc.Container(
                                     ),
                                     dbc.Button(
                                         "Explorar",
-                                        href="/explorar",
-                                        color="success",
+                                        href="/generator",
+                                        color="primary",
                                         className="mt-2 w-100 custom-button"
                                     ),
                                 ]
@@ -145,7 +150,7 @@ inicio_layout = dbc.Container(
                     dbc.Card(
                         [
                             dbc.CardImg(
-                                src="/static/settings.png",
+                                src="/static/casita.png",
                                 top=True,
                                 className="p-3 card-img-hover",
                                 style={"height": "200px", "object-fit": "contain"}
@@ -154,13 +159,13 @@ inicio_layout = dbc.Container(
                                 [
                                     html.H4("Configuración", className="card-title"),
                                     html.P(
-                                        "Personaliza tu experiencia y ajusta tus preferencias.",
+                                        "Mira mas a detalle que datos utiliza tu musica.",
                                         style={"font-size": "0.95rem"}
                                     ),
                                     dbc.Button(
                                         "Configurar",
-                                        href="/perfil",
-                                        color="secondary",
+                                        href="/home",
+                                        color="primary",
                                         className="mt-2 w-100 custom-button"
                                     ),
                                 ]
