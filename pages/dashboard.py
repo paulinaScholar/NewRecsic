@@ -9,9 +9,12 @@ from src.spotify.spotify_data import (
     get_listening_hours,
     get_top_artist_today,
     get_monthly_listening,
-    get_song_playcount
+    get_song_playcount,
+    get_top_artists,
+    get_recently_played
 )
 
+# Datos base
 top_genres = get_top_genres()
 top_podcasts = get_top_podcasts()
 listening_days = get_listening_days()
@@ -19,13 +22,17 @@ listening_hours = get_listening_hours()
 top_artist_today = get_top_artist_today()
 monthly_listening = get_monthly_listening()
 song_playcount = get_song_playcount()
+top_artists = get_top_artists()
+recently_played = get_recently_played()
 
+# Procesar días de escucha
 days, counts = (list(listening_days.keys()), list(listening_days.values())) if listening_days else ([], [])
 listening_days_graph = {
     "data": [go.Bar(x=days, y=counts, marker=dict(color="#1DB954"))],
     "layout": go.Layout(title="Hábitos musicales", xaxis_title="Día", yaxis_title="Canciones escuchadas", height=400)
 }
 
+# Gráfico de géneros
 genres_graph = px.pie(
     names=[genre["name"] for genre in top_genres],
     values=[genre["count"] for genre in top_genres],
@@ -34,6 +41,7 @@ genres_graph = px.pie(
     color_discrete_sequence=px.colors.sequential.Blues
 )
 
+# Heatmap de horas
 if listening_hours:
     heatmap_fig = px.imshow(
         listening_hours,
@@ -46,6 +54,7 @@ if listening_hours:
 else:
     heatmap_fig = go.Figure()
 
+# Layout
 dashboard_layout = html.Div([
     dbc.Container([
         dbc.Row([dbc.Col(
@@ -163,7 +172,18 @@ dashboard_layout = html.Div([
                         html.Li(html.A(podcast["name"], href=podcast["link"], target="_blank", className="text-decoration-none text-primary")) 
                         for podcast in top_podcasts
                     ]), width=12)
-                ])
+                ]),
+                html.Hr(),
+                dbc.Row([dbc.Col(html.H3("Top 5 Artistas", className="text-center mb-3"), width=12)]),
+                dbc.Row([dbc.Col(html.Ul([
+                    html.Li(html.A(artist["name"], href=artist["link"], target="_blank", className="text-decoration-none text-success", style={"fontSize": "18px"})) 
+                    for artist in top_artists
+                ]), width=12)], className="mb-4"),
+
+                dbc.Row([dbc.Col(html.H3("Escuchado Recientemente", className="text-center mb-3"), width=12)]),
+                dbc.Row([dbc.Col(html.Ul([
+                    html.Li(f"{track['name']} - {track['artist']}", style={"fontSize": "18px"}) for track in recently_played
+                ]), width=12)], className="mb-4"),
             ])
         ], className="shadow mb-4"))]),
 
