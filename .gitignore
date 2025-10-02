@@ -2,3 +2,4 @@ spotify_auth.py
 pages/dataset/
 *.csv
 *.xlsx
+.cache
