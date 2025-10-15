@@ -11,9 +11,15 @@ from pages.inicio import inicio_layout
 from pages.perfil import perfil_layout
 from pages.navbar import navbar
 
+
+external_stylesheets = [
+    dbc.themes.PULSE,
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+]
+
 app = Dash(
     __name__, 
-    external_stylesheets=[dbc.themes.PULSE], 
+    external_stylesheets=external_stylesheets, 
     suppress_callback_exceptions=True,
     title="Recsic 🎵"
 )
