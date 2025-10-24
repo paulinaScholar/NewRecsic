@@ -4,6 +4,8 @@ import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
 from .config import DATASET_PATH_2
 
+
+
 df = pd.read_csv(DATASET_PATH_2)
 
 metricas = ["danceability", "energy", "speechiness", "acousticness",
@@ -70,12 +72,21 @@ generator_layout = dbc.Container([
                 # Sliders para métricas
                 dbc.Row([
                     dbc.Col([
-                        html.Label("Danceability"),
+                        # html.Div([
+                        #     html.Span("Hover over me", id="tooltip-target", style={"cursor": "pointer"}),
+                        #     dbc.Tooltip("Tooltip text", target="tooltip-target", placement="top"),
+                        # ]),
+
+                        html.Label("Bailabilidad"), html.Span(id="DanceInfo-target", className="fa-regular fa-circle-question mx-2", style={"fontSize": "14px", "color": "#808080", "cursor": "pointer"}),
+                        dbc.Tooltip("Describe qué tan adecuada es una pista para bailar. Un valor de 0.0 es el menos bailable y 1.0 el más bailable.", target="DanceInfo-target", placement="top"),
+                        
                         dcc.Slider(id="slider-danceability", min=0, max=1, step=0.01, value=0.5,
                                    marks={0:"0", 0.5:"0.5", 1:"1"})
                     ]),
                     dbc.Col([
-                        html.Label("Energy"),
+                        html.Label("Energía"), html.Span(id="EnergyInfo-target", className="fa-regular fa-circle-question mx-2", style={"fontSize": "14px", "color": "#808080", "cursor": "pointer"}),
+                        dbc.Tooltip("Una medida de 0.0 a 1.0 que representa la intensidad y la actividad. Las pistas enérgicas se sienten rápidas, escandalosas y con mucho ruido.", target="EnergyInfo-target", placement="top"),
+                        
                         dcc.Slider(id="slider-energy", min=0, max=1, step=0.01, value=0.5,
                                    marks={0:"0", 0.5:"0.5", 1:"1"})
                     ]),
@@ -83,12 +94,16 @@ generator_layout = dbc.Container([
 
                 dbc.Row([
                     dbc.Col([
-                        html.Label("Valence"),
+                        html.Label("Valencia"), html.Span(id="ValenceInfo-target", className="fa-regular fa-circle-question mx-2", style={"fontSize": "14px", "color": "#808080", "cursor": "pointer"}),
+                        dbc.Tooltip("Una medida de 0.0 a 1.0 que describe la 'positividad' musical. Los valores más altos indican un tono más alegre.", target="ValenceInfo-target", placement="top"),
+                        
                         dcc.Slider(id="slider-valence", min=0, max=1, step=0.01, value=0.5,
                                    marks={0:"0", 0.5:"0.5", 1:"1"})
                     ]),
                     dbc.Col([
-                        html.Label("Tempo"),
+                        html.Label("Tempo"), html.Span(id="TempoInfo-target", className="fa-regular fa-circle-question mx-2", style={"fontSize": "14px", "color": "#808080", "cursor": "pointer"}),
+                        dbc.Tooltip("Una medida de 40 a 200 expresada en pulsaciones por minuto (BPM) que indica la velocidad de una pieza musical.", target="TempoInfo-target", placement="top"),
+                        
                         dcc.Slider(id="slider-tempo", min=40, max=200, step=1, value=120,
                                    marks={40:"40", 120:"120", 200:"200"})
                     ]),
