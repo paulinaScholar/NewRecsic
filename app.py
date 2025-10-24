@@ -11,18 +11,23 @@ from pages.inicio import inicio_layout
 from pages.perfil import perfil_layout
 from pages.navbar import navbar
 
+
+external_stylesheets = [
+    dbc.themes.PULSE,
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+]
+
 app = Dash(
     __name__, 
-    external_stylesheets=[dbc.themes.PULSE], 
+    external_stylesheets=external_stylesheets, 
     suppress_callback_exceptions=True,
     title="Recsic 🎵"
 )
 
-# Asignar el layout de la aplicación
 app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),  # Para controlar las rutas 
+    dcc.Location(id='url', refresh=False), 
     navbar,
-    html.Div(id='page-content')  # Aquí se mostrará el contenido de cada página
+    html.Div(id='page-content')
 ])
 
 @app.callback(
@@ -33,21 +38,23 @@ app.layout = html.Div([
 def display_page(pathname):
     match pathname:
         case '/recommendations':
-            return recommendations_layout  # Redirige a la página de recomendaciones
-        case '/dashboard':  # Agrega la ruta para el dashboard
-                return dashboard_layout  # Redirige a la página de dashboard
+            return recommendations_layout 
+        case '/dashboard':
+                return dashboard_layout 
         case '/generator':
-              return generator_layout #Redirige a la página de generador de lista musical
+              return generator_layout
         case '/login':
-              return login_layout # Redirige a la página de inicio de sesión
+              return login_layout 
         case '/registro':
-              return registro_layout # Redirige a la página de inicio de sesión
+              return registro_layout 
         case '/inicio':
-              return inicio_layout # Redirige a la página de inicio de sesión
+              return inicio_layout
         case '/perfil':
-              return perfil_layout # Redirige a la página de inicio de sesión
+              return perfil_layout
+        case '/home':
+              return home_layout
         case _:
-                return home_layout  # Página de inicio por defecto
+            return inicio_layout 
 
 if __name__ == '__main__':
     app.run(debug=True)
