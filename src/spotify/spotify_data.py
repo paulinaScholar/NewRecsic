@@ -1,6 +1,7 @@
 from .spotify_auth import get_spotify_client
 import datetime
 import random
+from dateutil import parser
 
 def get_listening_days():
     sp = get_spotify_client()
@@ -11,7 +12,8 @@ def get_listening_days():
 
         for track in results["items"]:
             played_at = track["played_at"]
-            date_obj = datetime.datetime.strptime(played_at, "%Y-%m-%dT%H:%M:%S.%fZ")
+            # date_obj = datetime.datetime.strptime(played_at, "%Y-%m-%dT%H:%M:%S.%fZ")
+            date_obj = parser.isoparse(played_at)
             day_of_week = date_obj.weekday()
             listening_counts[days_of_week[day_of_week]] += 1
 
@@ -98,7 +100,8 @@ def get_listening_hours():
     if results and "items" in results:
         for track in results["items"]:
             played_at = track["played_at"]
-            date_obj = datetime.datetime.strptime(played_at, "%Y-%m-%dT%H:%M:%S.%fZ")
+            # date_obj = datetime.datetime.strptime(played_at, "%Y-%m-%dT%H:%M:%S.%fZ")
+            date_obj = parser.isoparse(played_at)
             weekday = date_obj.weekday()  # 0 = Monday
             hour = date_obj.hour
             heatmap_data[weekday][hour] += 1
@@ -113,7 +116,8 @@ def get_artist_daily_minutes(artist_name):
     total_minutes = 0
     if results and "items" in results:
         for track in results["items"]:
-            played_at = datetime.datetime.strptime(track["played_at"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
+            # played_at = datetime.datetime.strptime(track["played_at"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
+            played_at = parser.isoparse(track["played_at"]).date()
             if played_at == today:
                 if any(artist_name.lower() in artist["name"].lower() for artist in track["track"]["artists"]):
                     total_minutes += track["track"]["duration_ms"] / 60000  
@@ -129,7 +133,8 @@ def get_monthly_listening():
     total_minutes = 0
     if results and "items" in results:
         for track in results["items"]:
-            played_at = datetime.datetime.strptime(track["played_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            # played_at = datetime.datetime.strptime(track["played_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            played_at = parser.isoparse(track["played_at"])
             if played_at.month == current_month:
                 total_minutes += track["track"]["duration_ms"] / 60000  
 
@@ -161,7 +166,8 @@ def get_top_artist_today():
 
     if results and "items" in results:
         for track in results["items"]:
-            played_at = datetime.datetime.strptime(track["played_at"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
+            # played_at = datetime.datetime.strptime(track["played_at"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
+            played_at = parser.isoparse(track["played_at"]).date()
             if played_at == today:
                 for artist in track["track"]["artists"]:
                     name = artist["name"]
