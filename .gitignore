@@ -3,3 +3,4 @@ pages/dataset/
 *.csv
 *.xlsx
 .cache
+*.pyc
