@@ -1,6 +1,4 @@
 spotify_auth.py
-pages/dataset/
-*.csv
-*.xlsx
+# pages/dataset/
 .cache
 *.pyc
