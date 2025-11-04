@@ -10,7 +10,9 @@ from pages.registro import registro_layout
 from pages.inicio import inicio_layout
 from pages.perfil import perfil_layout
 from pages.navbar import navbar
-
+import pandas as pd
+from db import engine
+from sqlalchemy import text
 
 external_stylesheets = [
     dbc.themes.PULSE,
@@ -55,6 +57,15 @@ def display_page(pathname):
               return home_layout
         case _:
             return inicio_layout 
+
+try:
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT version();"))
+        print("Connection successful!")
+        print("PostgreSQL version:", result.scalar())
+except Exception as e:
+    print("Connection failed:", e)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
