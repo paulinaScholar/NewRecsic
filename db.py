@@ -2,6 +2,7 @@ import os
 import psycopg2
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+from contextlib import contextmanager
 
 # Load enviroment vars
 load_dotenv()
@@ -22,3 +23,28 @@ db_url = (
 )
 
 engine = create_engine(db_url)
+
+def get_db_conn():
+    return psycopg2.connect(
+        dbname = DB_NAME,
+        user = DB_USER,
+        password = DB_PASSWORD,
+        host = DB_HOST,
+        port = DB_PORT,
+        sslmode = "require",
+        sslrootcert = CA_CERT_PATH
+    )
+
+@contextmanager
+def db_cursor():
+    conn = get_db_conn()
+    cur = conn.cursor()
+    try: 
+        yield cur
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cur.close()
+        conn.close()

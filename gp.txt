@@ -1,86 +1,86 @@
-import dash
-from dash import html, dcc
-from dash.dependencies import Input, Output, State
+Excellent question — and it’s *really* good that you asked, because that key is important for both **security** and **functionality**.
 
-app = dash.Dash(__name__, suppress_callback_exceptions=True)
+Let’s go through it clearly 👇
 
-app.layout = html.Div(
-    className="login-container",
-    children=[
-        # Logo
-        html.Div(
-            className="logo-container",
-            children=[
-                html.Img(
-                    src="/assets/Recsic-09.png",  # put your logo inside the /assets folder
-                    className="logo",
-                    alt="Logo"
-                )
-            ]
-        ),
-        # Login box
-        html.Div(
-            className="login-box",
-            children=[
-                html.H2("Inicia sesión"),
-                html.Div(id="msg", className="msg"),  # feedback message
+---
 
-                html.Div(
-                    children=[
-                        # Nombre de usuario
-                        html.Label("Nombre de usuario", htmlFor="usuario"),
-                        dcc.Input(
-                            id="usuario",
-                            type="text",
-                            placeholder="Nombre de usuario",
-                            required=True,
-                        ),
-                        html.Br(), html.Br(),
+## 🧩 What `server.secret_key` Does
 
-                        # Contraseña
-                        html.Label("Contraseña", htmlFor="contraseña"),
-                        dcc.Input(
-                            id="contraseña",
-                            type="password",
-                            placeholder="Contraseña",
-                            required=True,
-                        ),
-                        html.Br(), html.Br(),
+The `secret_key` is used by Flask to **encrypt and sign the session cookies** it sends to users.
+It prevents users from tampering with their own session data.
 
-                        # Botones
-                        html.Div(
-                            className="form-buttons",
-                            children=[
-                                html.A(
-                                    html.Button("Crear cuenta", type="button", className="button"),
-                                    href="/registro"  # replace with a page/route in Dash
-                                ),
-                                html.Button("Iniciar sesión", id="login-btn", className="button", n_clicks=0),
-                            ]
-                        )
-                    ]
-                )
-            ]
-        )
-    ]
-)
+If the key changes while the app is running, all existing sessions become invalid.
 
-# Callback to handle login
-@app.callback(
-    Output("msg", "children"),
-    Input("login-btn", "n_clicks"),
-    State("usuario", "value"),
-    State("contraseña", "value"),
-    prevent_initial_call=True
-)
-def login(n_clicks, usuario, contraseña):
-    if usuario == "admin" and contraseña == "1234":  # Example validation
-        return "✅ Inicio de sesión exitoso"
-    else:
-        return "❌ Usuario o contraseña incorrectos"
+So, think of it like a password that your server uses to lock and unlock user sessions.
 
+---
 
+## ✅ What You Should Set It To
 
+### 🟩 During Development
 
-msg is updated dynamically with a callback instead of Flask template variables like {{ msg }}.
+You can safely use a simple placeholder, e.g.:
 
+```python
+server.secret_key = "dev_secret_key_change_me"
+```
+
+This is fine for your local machine — it just needs to be *consistent* while testing.
+
+---
+
+### 🟦 For Production (e.g., DigitalOcean)
+
+When deploying, you **must** use a secure random key — and you should store it in your environment variables or `.env` file.
+
+In your `.env` file:
+
+```bash
+SECRET_KEY=your_long_random_secret_here
+```
+
+You can generate one in Python easily:
+
+```python
+import secrets
+print(secrets.token_hex(32))
+```
+
+Example output:
+
+```
+9fa2b7c22b3e483da8a7a93f04ec243e5c7cf9d6f57c72b34d52df145a9a4f92
+```
+
+Then in your `app.py`:
+
+```python
+import os
+
+server.secret_key = os.getenv("SECRET_KEY", "dev_secret_key_change_me")
+```
+
+✅ That way:
+
+* Locally, you can fall back to a safe default.
+* In production, Flask uses the strong key from the environment variable.
+
+---
+
+### ⚠️ What *Not* to Do
+
+* ❌ Don’t hardcode a short or obvious string like `"12345"` or `"password"`.
+* ❌ Don’t change the key every time you restart the app — it will log everyone out.
+
+---
+
+### 💡 Summary
+
+| Environment | What to Use                    | Where to Store                         |
+| ----------- | ------------------------------ | -------------------------------------- |
+| Local dev   | `"dev_secret_key_change_me"`   | directly in `app.py`                   |
+| Production  | `secrets.token_hex(32)` output | `.env` file → loaded via `os.getenv()` |
+
+---
+
+Would you like me to show you exactly how to set up your `.env` file for both your **database** and **secret key** together (so you can use `load_dotenv()` safely)?

@@ -10,9 +10,13 @@ from pages.registro import registro_layout
 from pages.inicio import inicio_layout
 from pages.perfil import perfil_layout
 from pages.navbar import navbar
+from pages.logout import logout_layout
 import pandas as pd
 from db import engine
 from sqlalchemy import text
+from flask import session
+from datetime import timedelta
+import os
 
 external_stylesheets = [
     dbc.themes.PULSE,
@@ -23,8 +27,16 @@ app = Dash(
     __name__, 
     external_stylesheets=external_stylesheets, 
     suppress_callback_exceptions=True,
-    title="Recsic 🎵"
+    title="Recsic"
 )
+
+# Sessions flask server
+server = app.server
+
+server.secret_key = os.urandom(24)
+server.config["SESSION_PERMANENT"] = True
+server.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
+
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False), 
@@ -32,6 +44,7 @@ app.layout = html.Div([
     html.Div(id='page-content')
 ])
 
+# Routing
 @app.callback(
     Output('page-content', 'children'),
     Input('url', 'pathname')
@@ -52,12 +65,15 @@ def display_page(pathname):
         case '/inicio':
               return inicio_layout
         case '/perfil':
-              return perfil_layout
+              return perfil_layout()
         case '/home':
               return home_layout
+        case '/logout':
+              return logout_layout()
         case _:
             return inicio_layout 
 
+# DB CONNECTION
 try:
     with engine.connect() as conn:
         result = conn.execute(text("SELECT version();"))
@@ -66,5 +82,7 @@ try:
 except Exception as e:
     print("Connection failed:", e)
 
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=False)
+    # app.run(host="0.0.0.0", port=8080, debug=True)
+    app.run(debug=True)

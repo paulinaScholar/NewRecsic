@@ -12,43 +12,43 @@ inicio_layout = dbc.Container(
             style={"background-color": "#f5f6fa"}, 
             children=[
                 # Logo
-                dbc.Col(
-                    html.Div(
-                        html.Img(
-                            src="/static/Recsic-11.png",
-                            className="logo",
-                            alt="Logo",
-                            style={"height": "80px"}
-                        ),
-                        className="logo-container"
-                    ),
-                    width="auto"
-                ),
+                # dbc.Col(
+                #     html.Div(
+                #         html.Img(
+                #             src="/static/Recsic-11.png",
+                #             className="logo",
+                #             alt="Logo",
+                #             style={"height": "80px"}
+                #         ),
+                #         className="logo-container"
+                #     ),
+                #     width="auto"
+                # ),
 
-                # Espaciador
-                dbc.Col(),
+                # # Espaciador
+                # dbc.Col(),
 
-                # Botones Perfil y Logout
-                dbc.Col(
-                    html.Div(
-                        [
-                            dbc.Button(
-                                "Perfil",
-                                href="/perfil",
-                                color="primary",
-                                className="me-3 custom-button"
-                            ),
-                            dbc.Button(
-                                "Cerrar sesión",
-                                href="/logout",
-                                color="danger",
-                                className="custom-button"
-                            )
-                        ],
-                        className="d-flex justify-content-end"
-                    ),
-                    width="auto"
-                ),
+                # # Botones Perfil y Logout
+                # dbc.Col(
+                #     html.Div(
+                #         [
+                #             dbc.Button(
+                #                 "Perfil",
+                #                 href="/perfil",
+                #                 color="primary",
+                #                 className="me-3 custom-button"
+                #             ),
+                #             dbc.Button(
+                #                 "Cerrar sesión",
+                #                 href="/logout",
+                #                 color="danger",
+                #                 className="custom-button"
+                #             )
+                #         ],
+                #         className="d-flex justify-content-end"
+                #     ),
+                #     width="auto"
+                # ),
             ]
         ),
 

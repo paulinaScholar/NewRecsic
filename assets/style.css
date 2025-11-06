@@ -1,8 +1,3 @@
-
-
-
-
-
 /* Estilos generales */
 body {
     font-family: 'Roboto', sans-serif;
@@ -23,7 +18,7 @@ body {
 
 /* Estilos del logo */
 .logo-container {
-    margin-bottom: 20px;
+    /* margin-bottom: 20px; */
     text-align: center;
 }
 
@@ -38,7 +33,7 @@ body {
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     padding: 40px;
-    width: 300px;
+    width: 500px;
     text-align: center;
 }
 
@@ -70,7 +65,24 @@ input[type="submit"], .button {
 }
 
 input[type="submit"]:hover, .button:hover {
-    background-color: #5a32a1; /* Morado más oscuro */
+    background-color: #382F66; /* Morado más oscuro */
+}
+
+input[type="submit"], .button-secondary {
+    width: 100%;
+    padding: 12px;
+    border-radius: 4px;
+    border: none;
+    background-color: #C0C0C0; /* Color morado */
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+input[type="submit"]:hover, .button-secondary:hover {
+    background-color: gray; /* Morado más oscuro */
+    color: white;
 }
 
 /* Estilos de los botones (cerrar sesión y perfil) */
@@ -105,7 +117,7 @@ input[type="submit"]:hover, .button:hover {
 }
 
 .button:hover {
-    background-color: #5a32a1; /* Morado más oscuro */
+    background-color: #382F66; /* Morado más oscuro */
 }
 
 /* Estilos para el perfil */
@@ -198,7 +210,7 @@ input[type="submit"]:hover, .button:hover {
 }
 
 .registro-box input[type="submit"]:hover, .registro-box .button:hover {
-    background-color: #5a32a1; /* Morado más oscuro */
+    background-color: #382F66; /* Morado más oscuro */
 }
 
 .registro-box a button {
@@ -214,7 +226,7 @@ input[type="submit"]:hover, .button:hover {
 }
 
 .registro-box a button:hover {
-    background-color: #5a32a1; /* Morado más oscuro */
+    background-color: #382F66; /* Morado más oscuro */
 }
 
 /* Contenedor del botón de regreso */
@@ -238,7 +250,7 @@ input[type="submit"]:hover, .button:hover {
 }
 
 .volver:hover {
-    background-color: #5a32a1; /* Morado más oscuro */
+    background-color: #382F66; /* Morado más oscuro */
 }
 .custom-button {
     transition: all 0.3s ease;
@@ -265,4 +277,18 @@ input[type="submit"]:hover, .button:hover {
 
 .hero h1 {
     letter-spacing: 1px;
+}
+
+.msg {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.msg.error {
+    color: #dc3545; /* red */
+}
+
+.msg.success {
+    color: #28a745; /* green */
 }
