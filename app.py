@@ -38,11 +38,13 @@ server.config["SESSION_PERMANENT"] = True
 server.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
 
 
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=False), 
-    navbar,
-    html.Div(id='page-content')
-])
+app.layout = html.Div("🚀 App started successfully")
+
+# app.layout = html.Div([
+    # dcc.Location(id='url', refresh=False), 
+    # navbar,
+    # html.Div(id='page-content')
+# ])
 
 # Routing
 @app.callback(
