@@ -37,7 +37,7 @@ server.secret_key = os.urandom(24)
 server.config["SESSION_PERMANENT"] = True
 server.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
 
-
+print("reached layout")
 app.layout = html.Div("🚀 App started successfully")
 
 # app.layout = html.Div([
