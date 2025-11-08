@@ -1,16 +1,16 @@
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
-from pages.recommendations import recommendations_layout
-from pages.home import home_layout
-from pages.dashboard import dashboard_layout
-from pages.generator import generator_layout
-from pages.login import login_layout
-from pages.registro import registro_layout
-from pages.inicio import inicio_layout
-from pages.perfil import perfil_layout
-from pages.navbar import navbar
-from pages.logout import logout_layout
+# from pages.recommendations import recommendations_layout
+# from pages.home import home_layout
+# from pages.dashboard import dashboard_layout
+# from pages.generator import generator_layout
+# from pages.login import login_layout
+# from pages.registro import registro_layout
+# from pages.inicio import inicio_layout
+# from pages.perfil import perfil_layout
+# from pages.navbar import navbar
+# from pages.logout import logout_layout
 import pandas as pd
 # from db import engine
 # from sqlalchemy import text
