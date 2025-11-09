@@ -9,8 +9,8 @@ from pages.generator import generator_layout
 # from pages.registro import registro_layout
 from pages.inicio import inicio_layout
 # from pages.perfil import perfil_layout
-# from pages.navbar import navbar
-# from pages.logout import logout_layout
+from pages.navbar import navbar
+from pages.logout import logout_layout
 import pandas as pd
 # from db import engine
 # from sqlalchemy import text
