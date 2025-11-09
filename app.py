@@ -12,8 +12,8 @@ from pages.inicio import inicio_layout
 from pages.navbar import navbar
 from pages.logout import logout_layout
 import pandas as pd
-# from db import engine
-# from sqlalchemy import text
+from db import engine
+from sqlalchemy import text
 from flask import session
 from datetime import timedelta
 import os
@@ -76,13 +76,13 @@ def display_page(pathname):
             return inicio_layout 
 
 # DB CONNECTION
-# try:
-#     with engine.connect() as conn:
-#         result = conn.execute(text("SELECT version();"))
-#          print("Connection successful!")
-#         print("PostgreSQL version:", result.scalar())
-# except Exception as e:
-#     print("Connection failed:", e)
+try:
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT version();"))
+        print("Connection successful!")
+        print("PostgreSQL version:", result.scalar())
+except Exception as e:
+    print("Connection failed:", e)
 
 
 if __name__ == "__main__":
