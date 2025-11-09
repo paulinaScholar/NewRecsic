@@ -2,7 +2,7 @@ from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 from pages.recommendations import recommendations_layout
-from pages.home import home_layout
+# from pages.home import home_layout
 # from pages.dashboard import dashboard_layout
 # from pages.generator import generator_layout
 # from pages.login import login_layout
