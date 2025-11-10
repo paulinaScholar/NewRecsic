@@ -86,7 +86,7 @@ def dashboard_layout():
     # Lazy load data — failures are caught by safe_get
         top_genres = safe_get(spotify_data.get_top_genres) or []
         print("top genres done: ", len(top_genres))
-    except:
+    except Exception as e:
         print("[dashboard] failed early",e )
         traceback.print_exc()
         return html.Div("Early dashboard failure")
