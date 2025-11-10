@@ -4,14 +4,14 @@ import plotly.express as px
 import plotly.graph_objects as go
 from src.spotify import spotify_data 
 import traceback
-print("dashboard.oy imported")
+print("dashboard.py imported")
 
 def safe_get(fn, *args, **kwargs):
     """Call a data function and return None on error (and log)."""
     try:
         return fn(*args, **kwargs)
     except Exception as e:
-        print(f"[dashboard] Error calling {fn.__name__}: {e}")
+        print(f"[dashboard] Error in {fn.__name__}: {e}")
         traceback.print_exc()
         return None
 
@@ -78,11 +78,19 @@ def make_dashboard_cards(top_artist_today, monthly_listening, song_playcount):
     }
 
 def dashboard_layout():
-    """Return the dashboard layout. Data is loaded lazily here (at request time)."""
     print("[dashboard] building layout (loading data)")
 
+
+    try:
+        print("calling get_top_genres ")
     # Lazy load data — failures are caught by safe_get
-    top_genres = safe_get(spotify_data.get_top_genres) or []
+        top_genres = safe_get(spotify_data.get_top_genres) or []
+        print("top genres done: ", len(top_genres))
+    except:
+        print("[dashboard] failed early",e )
+        traceback.print_exc()
+        return html.Div("Early dashboard failure")
+
     top_podcasts = safe_get(spotify_data.get_top_podcasts) or []
     listening_days = safe_get(spotify_data.get_listening_days) or {}
     listening_hours = safe_get(spotify_data.get_listening_hours) or None
@@ -241,6 +249,7 @@ def dashboard_layout():
                 dbc.Row([dbc.Col(dbc.Button("Inicio", href="/", color="secondary", className="mt-3"), width=12, className="text-center")])
             ], className="p-4")
         ])
+        print("[dashboard] layout built successfully")
         return layout
 
     except Exception as e:
