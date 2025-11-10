@@ -47,48 +47,66 @@ except Exception as e:
     recently_played = []
 
 # --- Build layout ---
+# def dashboard_layout():
+#     if data_error:
+#         layout = html.Div(
+#             className="dashboard-error",
+#             children=[
+#                 html.H2("⚠️ Ocurrió un problema al cargar tus datos"),
+#                 html.P(
+#                     "No pudimos obtener la información de Spotify o la base de datos. "
+#                     "Por favor, intenta recargar la página o vuelve más tarde."
+#                 ),
+#                 html.A(
+#                     html.Button("Volver al inicio", className="button-secondary"),
+#                     href="/inicio"
+#                 ),
+#             ],
+#             style={"textAlign": "center", "padding": "50px"}
+#         )
+
+#     else:
+#         # Example minimal chart section (replace with your real plots)
+#         layout = html.Div(
+#             className="dashboard-container",
+#             children=[
+#                 html.H2("Panel de Escucha", className="dashboard-title"),
+
+#                 html.Div(
+#                     children=[
+#                         html.H4("Tus géneros más escuchados"),
+#                         dcc.Graph(
+#                             figure=px.pie(
+#                                 names=[g["name"] for g in top_genres] if top_genres else [],
+#                                 values=[g["count"] for g in top_genres] if top_genres else [],
+#                                 title="Top Géneros",
+#                                 hole=0.4,
+#                                 color_discrete_sequence=px.colors.sequential.Blues
+#                             )
+#                         ),
+#                     ],
+#                     className="dashboard-section",
+#                 ),
+#             ],
+#         )
+
 def dashboard_layout():
-    if data_error:
+    try:
         layout = html.Div(
-            className="dashboard-error",
-            children=[
-                html.H2("⚠️ Ocurrió un problema al cargar tus datos"),
-                html.P(
-                    "No pudimos obtener la información de Spotify o la base de datos. "
-                    "Por favor, intenta recargar la página o vuelve más tarde."
-                ),
-                html.A(
-                    html.Button("Volver al inicio", className="button-secondary"),
-                    href="/inicio"
-                ),
+            [
+                html.H2("Dashboard", className="text-center"),
+                # Your plots and components here, e.g.:
+                dcc.Graph(figure=px.bar(...)),
+                dcc.Graph(figure=go.Figure(...)),
             ],
-            style={"textAlign": "center", "padding": "50px"}
-        )
-
-    else:
-        # Example minimal chart section (replace with your real plots)
-        layout = html.Div(
             className="dashboard-container",
-            children=[
-                html.H2("Panel de Escucha", className="dashboard-title"),
-
-                html.Div(
-                    children=[
-                        html.H4("Tus géneros más escuchados"),
-                        dcc.Graph(
-                            figure=px.pie(
-                                names=[g["name"] for g in top_genres] if top_genres else [],
-                                values=[g["count"] for g in top_genres] if top_genres else [],
-                                title="Top Géneros",
-                                hole=0.4,
-                                color_discrete_sequence=px.colors.sequential.Blues
-                            )
-                        ),
-                    ],
-                    className="dashboard-section",
-                ),
-            ],
         )
+    except Exception as e:
+        layout = html.Div(
+            f"Error loading dashboard: {e}",
+            style={"color": "red", "padding": "20px"},
+        )
+    return layout
 
 # # pages/dashboard.py
 # from dash import html, dcc
