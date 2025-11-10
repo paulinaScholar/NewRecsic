@@ -1,5 +1,9 @@
-from dash import html
+from dash import html, dcc
+import plotly.express as px
+import plotly.graph_objects as go
+import dash_bootstrap_components as dbc
 
+# --- Try importing and running Spotify data logic safely ---
 try:
     from src.spotify.spotify_data import (
         get_top_genres,
@@ -13,6 +17,7 @@ try:
         get_recently_played
     )
 
+    # --- Load data ---
     top_genres = get_top_genres()
     top_podcasts = get_top_podcasts()
     listening_days = get_listening_days()
@@ -23,10 +28,14 @@ try:
     top_artists = get_top_artists()
     recently_played = get_recently_played()
 
+    data_error = False
+
 except Exception as e:
     import traceback
-    print("🔥 Error while loading dashboard:", e)
+    print("🔥 Error while loading dashboard data:", e)
     traceback.print_exc()
+    data_error = True
+    # Provide fallback values so the dashboard still loads
     top_genres = []
     top_podcasts = []
     listening_days = {}
@@ -37,7 +46,49 @@ except Exception as e:
     top_artists = []
     recently_played = []
 
-layout = html.Div("Dashboard loaded safely (or fallback).")
+# --- Build layout ---
+
+if data_error:
+    layout = html.Div(
+        className="dashboard-error",
+        children=[
+            html.H2("⚠️ Ocurrió un problema al cargar tus datos"),
+            html.P(
+                "No pudimos obtener la información de Spotify o la base de datos. "
+                "Por favor, intenta recargar la página o vuelve más tarde."
+            ),
+            html.A(
+                html.Button("Volver al inicio", className="button-secondary"),
+                href="/inicio"
+            ),
+        ],
+        style={"textAlign": "center", "padding": "50px"}
+    )
+
+else:
+    # Example minimal chart section (replace with your real plots)
+    layout = html.Div(
+        className="dashboard-container",
+        children=[
+            html.H2("Panel de Escucha", className="dashboard-title"),
+
+            html.Div(
+                children=[
+                    html.H4("Tus géneros más escuchados"),
+                    dcc.Graph(
+                        figure=px.pie(
+                            names=[g["name"] for g in top_genres] if top_genres else [],
+                            values=[g["count"] for g in top_genres] if top_genres else [],
+                            title="Top Géneros",
+                            hole=0.4,
+                            color_discrete_sequence=px.colors.sequential.Blues
+                        )
+                    ),
+                ],
+                className="dashboard-section",
+            ),
+        ],
+    )
 
 
 # # pages/dashboard.py
