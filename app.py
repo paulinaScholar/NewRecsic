@@ -57,7 +57,6 @@ def display_page(pathname):
         case '/recommendations':
             return recommendations_layout 
         case '/dashboard':
-                print("→ loading dashboard_layout()")
                 return dashboard_layout() 
         case '/generator':
               return generator_layout
