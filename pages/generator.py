@@ -1,10 +1,12 @@
-from dash import html, dcc, callback, Input, Output, State
+from dash import html, dcc, callback, Input, Output, State, ALL, no_update
+import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
 from .config import DATASET_PATH_2
-
-
+import re
+import base64
+import json
 
 df = pd.read_csv(DATASET_PATH_2)
 
@@ -15,21 +17,41 @@ df = df.dropna(subset=metricas)
 df.drop_duplicates(inplace=True)
 
 
-def recommend_by_metrics(usuario_input, exacto=False, top_n=10):
+def recommend_by_metrics(usuario_input, exacto=False, top_n=11):
     df_copy = df.copy()
 
+    song_name = usuario_input.get("trackName")
+    artist_name = usuario_input.get("artistName")
+
+    # Si hay canción seleccionada, usarla como referencia
+    if song_name:
+        if artist_name:
+            base_song = df_copy[
+                (df_copy["trackName"].str.lower() == song_name.lower()) &
+                (df_copy["artistName"].str.lower() == artist_name.lower())
+            ]
+        else:
+            base_song = df_copy[df_copy["trackName"].str.lower() == song_name.lower()]
+
+        if not base_song.empty:
+            user_vector = base_song.iloc[0][metricas].values
+        else:
+            user_vector = [usuario_input.get(m, 0) for m in metricas]
+    else:
+        user_vector = [usuario_input.get(m, 0) for m in metricas]
+
+    # Cálculo exacto o por distancia
     if exacto:
-        query = " & ".join([f"{col} == {val}" for col, val in usuario_input.items()])
+        query = " & ".join([f"{col} == {val}" for col, val in usuario_input.items() if col in metricas])
         resultados = df_copy.query(query)
     else:
         X = df_copy[metricas].fillna(0)
-        user_vector = [usuario_input.get(m, 0) for m in metricas]
-
         distancias = euclidean_distances([user_vector], X)[0]
         df_copy["distancia"] = distancias
         resultados = df_copy.sort_values("distancia").head(top_n)
 
     return resultados[["trackName", "artistName"] + metricas]
+
 
 
 generator_layout = dbc.Container([
@@ -40,28 +62,76 @@ generator_layout = dbc.Container([
 
                 html.P("Busca una canción y revisa sus métricas:", className="text-center"),
 
-                # Campos separados para Canción y Artista
+                # Cancion
                 dbc.Row([
                     dbc.Col([
-                        dbc.InputGroup([
-                            dbc.InputGroupText("🎵 Canción"),
-                            dbc.Input(id="song-input", type="text", placeholder="Ejemplo: Gangnam Style")
-                        ])
+                        html.Div(
+                            style = { "position": "relative", "marginBottom": "20px"},
+                            children = [
+                                dbc.InputGroup([
+                                    dbc.InputGroupText("🎵 Canción"),
+                                    dbc.Input(
+                                        id="song-input", 
+                                        type="text",
+                                        inputMode="text",
+                                        pattern=".*", 
+                                        placeholder="Ejemplo: Gangnam Style",
+                                        style={
+                                            "width": "100%",
+                                            "padding": "8px",
+                                            "borderRadius": "8px",
+                                            "border": "1px solid #ccc"
+                                        }
+                                    ),
+                                    html.Ul(
+                                        id="track-suggestions",
+                                        style={
+                                            "listStyleType": "none",
+                                            "padding": "0",
+                                            "marginTop": "0",
+                                            "border": "1px solid #ccc",
+                                            "borderRadius": "8px",
+                                            "maxHeight": "150px",
+                                            "overflowY": "auto",
+                                            "display": "none",
+                                            "backgroundColor": "white",
+                                            "position": "absolute",
+                                            "width": "100%",
+                                            "zIndex": "9999",
+                                            "boxShadow": "0 4px 8px rgba(0,0,0,0.1)",
+                                        },
+                                    )
+                                ])
+                            ]
+                        )
                     ], md=6),
 
+                    # Artista
                     dbc.Col([
                         dbc.InputGroup([
                             dbc.InputGroupText("👤 Artista (opcional)"),
-                            dbc.Input(id="artist-input", type="text", placeholder="Ejemplo: PSY")
+                            dbc.Input(
+                                id="artist-input", 
+                                type="text", 
+                                placeholder="Ejemplo: PSY",
+                                debounce=True,
+                                style={
+                                    "width": "100%",
+                                    "padding": "8px",
+                                    "borderRadius": "8px",
+                                    "border": "1px solid #ccc",
+                                    "marginBottom": "15px"
+                                },
+                            )
                         ])
                     ], md=6),
-                ], className="mb-3"),
+                ], className="mb-6"),
 
                 dbc.Row([
                     dbc.Col(dbc.Button("📊 Buscar Métricas", id="search-song", n_clicks=0,
-                                       color="info", className="btn-lg w-100")),
+                                       color="info", className="btn-sm w-100")),
                 ], className="mb-4 text-center"),
-
+                
                 html.Div(id="song-metrics"),  # Aquí se mostrarán las métricas de la canción
 
                 html.Hr(),
@@ -120,9 +190,30 @@ generator_layout = dbc.Container([
                 dbc.Row([
                     dbc.Col(dbc.Button("🎧 Buscar Canciones", id="generate-button", n_clicks=0,
                                        color="primary", className="btn-lg w-100")),
+                ], className="mb-2 text-center"),
+                
+                dbc.Row([
+                    dbc.Col(dbc.Button("Limpiar Resultados", id="clear-all", n_clicks=0,
+                                       className="bg-secondary text-white border-0 btn-sm w-100 ")),
                 ], className="mb-4 text-center"),
 
+
                 html.Div(id="generate-list"),
+
+                html.Hr(),
+
+                dbc.Row([
+                    dbc.Col(
+                        html.Div(
+                            html.Img(
+                                src="/static/Recsic-12.png",
+                                className="img-fluid",
+                                style={ "height": "70px" }
+                            ),
+                        ), className="text-center"
+                    ),
+                ]),
+                
 
                 html.Hr(),
 
@@ -132,8 +223,8 @@ generator_layout = dbc.Container([
                 ], className="text-center")
             ])
         ], className="shadow-lg p-4 rounded-3"))
-    ], className="mt-5 justify-content-center")
-], className="d-flex justify-content-center")
+    ], className="mt-5 col-lg-8 justify-content-center")
+], className="d-flex justify-content-center col-lg-8")
 
 # ----------------------------
 # Callback para mostrar métricas de la canción
@@ -148,20 +239,30 @@ def show_song_metrics(n_clicks, song_name, artist_name):
     if not n_clicks or not song_name:
         return ""
 
+    song_name = re.escape(song_name)
+    artist_name = re.escape(artist_name) if artist_name else None
+
     # Filtrar por canción
-    resultados = df[df["trackName"].str.contains(song_name, case=False, na=False)]
+    resultados = df[df["trackName"].str.contains(song_name, case=False, na=False, regex=True)]
 
     # Si también puso artista, filtrar aún más
     if artist_name:
-        resultados = resultados[resultados["artistName"].str.contains(artist_name, case=False, na=False)]
+        resultados = resultados[resultados["artistName"].str.contains(artist_name, case=False, na=False, regex=True)]
 
     if resultados.empty:
         return dbc.Alert("⚠️ No se encontró esa canción en el dataset.", color="warning")
 
+    resultados = resultados.head(5)
+
     # Mostrar coincidencias
     return dbc.Table(
         [
-            html.Thead(html.Tr([html.Th("Canción"), html.Th("Artista")] + [html.Th(m) for m in metricas])),
+            html.Thead(
+                html.Tr(
+                    [html.Th("Canción"), html.Th("Artista")] +
+                    [html.Th(m) for m in metricas]
+                )
+            ),
             html.Tbody([
                 html.Tr([
                     html.Td(row["trackName"]),
@@ -182,17 +283,21 @@ def show_song_metrics(n_clicks, song_name, artist_name):
 @callback(
     Output("generate-list", "children"),
     Input("generate-button", "n_clicks"),
-    Input("slider-danceability", "value"),
-    Input("slider-energy", "value"),
-    Input("slider-valence", "value"),
-    Input("slider-tempo", "value"),
-    Input("exact-match", "value")
+    State("song-input", "value"),
+    State("artist-input", "value"),
+    State("slider-danceability", "value"),
+    State("slider-energy", "value"),
+    State("slider-valence", "value"),
+    State("slider-tempo", "value"),
+    State("exact-match", "value")
 )
-def update_generator(n_clicks, danceability, energy, valence, tempo, exact_match):
+def update_generator(n_clicks, song_name, artist_name, danceability, energy, valence, tempo, exact_match):
     if not n_clicks:
         return []
 
     usuario_input = {
+        "trackName": song_name,
+        "artistName": artist_name,
         "danceability": danceability,
         "energy": energy,
         "valence": valence,
@@ -208,9 +313,11 @@ def update_generator(n_clicks, danceability, energy, valence, tempo, exact_match
 
     return dbc.Table(
         [
-            html.Thead(html.Tr([html.Th("Canción"), html.Th("Artista"),
-                                html.Th("Danceability"), html.Th("Energy"),
-                                html.Th("Valence"), html.Th("Tempo")])),
+            html.Thead(html.Tr([
+                html.Th("Canción"), html.Th("Artista"),
+                html.Th("Danceability"), html.Th("Energy"),
+                html.Th("Valence"), html.Th("Tempo")
+            ])),
             html.Tbody([
                 html.Tr([
                     html.Td(row["trackName"]),
@@ -227,3 +334,141 @@ def update_generator(n_clicks, danceability, energy, valence, tempo, exact_match
         responsive=True,
         className="mt-4"
     )
+# ------------------------------------
+# Callback para sliders
+# ------------------------------------
+@callback(
+    Output("slider-danceability", "value"),
+    Output("slider-energy", "value"),
+    Output("slider-valence", "value"),
+    Output("slider-tempo", "value"),
+    Input("song-input", "value"),
+    Input("artist-input", "value"),
+    prevent_initial_call=True
+)
+def update_sliders(song_name, artist_name):
+    if not song_name:
+        # Si no hay canción seleccionada, no cambiar los sliders
+        raise dash.exceptions.PreventUpdate
+
+    # Buscar la canción en el dataset
+    if artist_name:
+        song = df[
+            (df["trackName"].str.lower() == song_name.lower()) &
+            (df["artistName"].str.lower() == artist_name.lower())
+        ]
+    else:
+        song = df[df["trackName"].str.lower() == song_name.lower()]
+
+    if song.empty:
+        raise dash.exceptions.PreventUpdate
+
+    # Obtener las métricas de la canción seleccionada
+    song_data = song.iloc[0]
+    return (
+        float(song_data["danceability"]),
+        float(song_data["energy"]),
+        float(song_data["valence"]),
+        float(song_data["tempo"])
+    )
+
+
+# ------------------------------------
+# Callback para autocomplete canciones
+# ------------------------------------
+@callback(
+    Output("song-input", "value"),
+    Output("artist-input", "value"),
+    Output("track-suggestions", "children"),
+    Output("track-suggestions", "style"),
+    Input("song-input", "value"),
+    Input({"type": "track-suggestion", "index": ALL}, "n_clicks"),
+    State({"type": "track-suggestion", "index": ALL}, "id"),
+    prevent_initial_call=True,
+)
+def update_track_autocomplete(value, n_clicks, ids):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        raise dash.exceptions.PreventUpdate
+
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
+    # 🖱️ Si se hace clic en una sugerencia
+    if "track-suggestion" in triggered_id:
+        if not any(n_clicks):
+            raise dash.exceptions.PreventUpdate
+        clicked_index = n_clicks.index(max(n_clicks))
+        selected = ids[clicked_index]["index"]
+
+        # 🔹 Decodificar el ID (base64 JSON)
+        try:
+            decoded = base64.urlsafe_b64decode(selected.encode()).decode()
+            data = json.loads(decoded)
+            track, artist = data.get("track", ""), data.get("artist", "")
+        except Exception:
+            track, artist = "", ""
+
+        return track, artist, [], {"display": "none"}
+
+    # ⌨️ Si el usuario está escribiendo
+    if not value:
+        return "", "", [], {"display": "none"}
+
+    # Escapar caracteres especiales del texto ingresado
+    song_value = re.escape(value.strip())
+
+    # Buscar coincidencias seguras por nombre de canción
+    matches = df[df["trackName"].astype(str).str.contains(song_value, case=False, na=False, regex=True)]
+
+    if matches.empty:
+        return value, "", [html.Li("Sin resultados", style={"padding": "8px", "color": "#777"})], {"display": "block"}
+
+    # Crear lista de sugerencias (con IDs codificados)
+    suggestions = []
+    for _, row in matches[["trackName", "artistName"]].dropna().head(6).iterrows():
+        track = row["trackName"]
+        artist = row["artistName"]
+
+        # Codificar la información como JSON → base64
+        encoded_id = base64.urlsafe_b64encode(json.dumps({"track": track, "artist": artist}).encode()).decode()
+
+        suggestions.append(
+            html.Li(
+                f"{track} — {artist}",
+                n_clicks=0,
+                id={"type": "track-suggestion", "index": encoded_id},
+                style={
+                    "padding": "8px",
+                    "cursor": "pointer",
+                    "borderBottom": "1px solid #eee",
+                    "whiteSpace": "nowrap",
+                    "overflow": "hidden",
+                    "textOverflow": "ellipsis",
+                },
+                title=f"{track} — {artist}"  # 💡 Tooltip al pasar el mouse
+            )
+        )
+
+    return value, "", suggestions, {"display": "block"}
+
+# ---------------------------------
+# Callback para limpiar resultados
+# ---------------------------------
+@callback(
+    Output("song-input", "value", allow_duplicate=True),
+    Output("artist-input", "value", allow_duplicate=True),
+    Output("slider-danceability", "value", allow_duplicate=True),
+    Output("slider-energy", "value", allow_duplicate=True),
+    Output("slider-valence", "value", allow_duplicate=True),
+    Output("slider-tempo", "value", allow_duplicate=True),
+    Output("song-metrics", "children", allow_duplicate=True),
+    Output("generate-list", "children", allow_duplicate=True),
+    Input("clear-all", "n_clicks"),
+    prevent_initial_call=True,
+)
+def clear_all(n_clicks):
+    if not n_clicks:
+        raise dash.exceptions.PreventUpdate
+
+    # Reinicia todos los valores
+    return "", "", 0.5, 0.5, 0.5, 120, [], []
