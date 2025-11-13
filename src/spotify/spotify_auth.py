@@ -1,3 +1,4 @@
+# spotify_auth.py
 from flask import session, redirect, request
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
@@ -10,25 +11,27 @@ load_dotenv()
 
 # --- Configuración de scopes ---
 SPOTIPY_SCOPES = (
+    "user-read-private "
+    "user-read-email "
     "user-top-read "
     "user-read-recently-played "
-    "user-read-private "
     "user-read-currently-playing "
     "user-read-playback-state "
     "user-read-playback-position "
     "user-library-read "
-    "playlist-read-private "
-    "user-read-email"
+    "playlist-read-private"
 )
 
 # --- Función para obtener el objeto SpotifyOAuth ---
 def get_spotify_oauth():
+    # Cache persistente por usuario (útil para desarrollo)
+    cache_path = ".spotify-token-cache"
     return SpotifyOAuth(
         client_id=os.getenv("SPOTIPY_CLIENT_ID"),
         client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
-        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
-        scope=SPOTIPY_SCOPES,  # Scope explícito para todos los usuarios
-        cache_path=None  # Evita compartir cache entre usuarios
+        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),  # Debe coincidir EXACTO con Spotify Dashboard
+        scope=SPOTIPY_SCOPES,
+        cache_path=cache_path
     )
 
 # --- Rutas de autenticación ---
@@ -73,3 +76,19 @@ def get_spotify_client():
 
 def is_user_authenticated():
     return "token_info" in session
+
+# --- Función segura para llamadas a Spotify ---
+def safe_spotify_call(fn, *args, **kwargs):
+    """
+    Ejecuta la función fn(sp, *args, **kwargs) solo si el usuario está autenticado.
+    Si no lo está, redirige al login de Spotify.
+    """
+    sp = get_spotify_client()
+    if not sp:
+        return redirect("/login_spotify")
+    try:
+        return fn(sp, *args, **kwargs)
+    except Exception as e:
+        print(f"[Spotify Error] {e}")
+        return None
+
