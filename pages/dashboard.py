@@ -23,7 +23,10 @@ def make_genres_figure(top_genres):
         return go.Figure()
     names = [g.get("name", "") for g in top_genres]
     values = [g.get("count", 0) for g in top_genres]
-    return px.pie(names=names, values=values, title="Top Géneros", hole=0.4, color_discrete_sequence=px.colors.sequential.Blues)
+    return px.pie(
+        names=names, values=values, title="Top Géneros", hole=0.4,
+        color_discrete_sequence=px.colors.sequential.Blues
+    )
 
 def make_listening_days_graph(listening_days):
     if not listening_days:
@@ -38,11 +41,14 @@ def make_heatmap(listening_hours):
     if not listening_hours:
         return go.Figure()
     try:
-        fig = px.imshow(listening_hours, labels=dict(x="Hora", y="Día", color="Canciones"),
-                        x=[f"{h}:00" for h in range(24)],
-                        y=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"],
-                        color_continuous_scale="Greens",
-                        title="Mapa de calor de horas de escucha")
+        fig = px.imshow(
+            listening_hours,
+            labels=dict(x="Hora", y="Día", color="Canciones"),
+            x=[f"{h}:00" for h in range(24)],
+            y=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"],
+            color_continuous_scale="Greens",
+            title="Mapa de calor de horas de escucha"
+        )
         return fig
     except Exception as e:
         print("[dashboard] heatmap creation failed:", e)
@@ -58,23 +64,74 @@ def make_dashboard_cards(top_artist_today, monthly_listening, song_playcount):
         "song_count": song_playcount.get("count") if song_playcount else None
     }
 
+# ---
 def generate_ticket_component(sp):
-    top_genres = safe_get(spotify_data.get_top_genres, sp) or []
-    listening_days = safe_get(spotify_data.get_listening_days, sp) or {}
+    top_tracks = safe_get(spotify_data.get_top_tracks, sp, 10) or []
     top_artist_today = safe_get(spotify_data.get_top_artist_today, sp) or {}
     song_playcount = safe_get(spotify_data.get_song_playcount, sp) or {}
+    top_genres = safe_get(spotify_data.get_top_genres, sp) or []
 
-    cards = make_dashboard_cards(top_artist_today, sum(listening_days.values()), song_playcount)
+    # Crear filas de tracks
+    table_rows = []
+    for track in top_tracks:
+        track_artists = ", ".join([a["name"] for a in track["artists"]])
+        table_rows.append(
+            html.Tr([
+                html.Td(track["id"], style={"width": "5%"}),
+                html.Td(f"{track['name']} - {track_artists}"),
+                html.Td(f"{int(track['duration_ms']/60000)} min", style={"width": "15%"})
+            ])
+        )
+
+    # Tarjeta estilo vinilo
     return dbc.Card(
         dbc.CardBody([
-            html.H4("Spotify Ticket", className="card-title text-center"),
-            html.Hr(),
-            html.P(f"Artista del día: {cards['artist_name']} - {cards['artist_minutes']} min" if cards['artist_name'] else "No escuchaste música hoy"),
-            html.P(f"Top canción: '{cards['song']}' - {cards['song_count']} reproducciones" if cards['song'] else "Sin canción destacada"),
-            html.P("Top Géneros: " + ", ".join([g["name"] for g in top_genres]) if top_genres else "Sin datos"),
+            html.Div([
+                # Circulo vinilo en el fondo
+                html.Div(style={
+                    "width": "100px",
+                    "height": "100px",
+                    "backgroundColor": "#222",
+                    "borderRadius": "50%",
+                    "margin": "0 auto 20px auto",
+                    "boxShadow": "0 0 20px rgba(0,0,0,0.7)"
+                }),
+                html.H4("Recsumen", className="card-title text-center text-white"),
+                html.Hr(style={"borderColor": "gray"}),
+                html.P(
+                    f"Artista del día: {top_artist_today.get('artist')} - {top_artist_today.get('minutes')} min"
+                    if top_artist_today.get("artist") else "No escuchaste música hoy",
+                    className="text-white"
+                ),
+                html.P(
+                    f"Top canción: '{song_playcount.get('song')}' - {song_playcount.get('count')} reproducciones"
+                    if song_playcount.get("song") else "Sin canción destacada",
+                    className="text-white"
+                ),
+                html.P(
+                    "Top Géneros: " + ", ".join([g["name"] for g in top_genres])
+                    if top_genres else "Sin datos",
+                    className="text-white"
+                ),
+                html.Hr(style={"borderColor": "gray"}),
+                html.Table(
+                    [html.Thead(html.Tr([
+                        html.Th("QTY"), html.Th("ITEM"), html.Th("DURACIÓN")
+                    ]))] +
+                    table_rows +
+                    [html.Tr([html.Td("TOTAL", colSpan=2), html.Td(f"{len(top_tracks)} tracks")])]
+                )
+            ], style={
+                "backgroundColor": "#1e1e1e",
+                "padding": "20px",
+                "borderRadius": "15px",
+                "boxShadow": "0 0 20px rgba(0,0,0,0.8)"
+            })
         ]),
-        className="m-3 shadow text-center"
+        className="m-3"
     )
+
+
 
 # --- Layout del Dashboard ---
 def dashboard_layout():
@@ -137,11 +194,7 @@ def dashboard_layout():
                             ]), className="shadow mb-3"), md=4),
                         ]),
                         html.Hr(),
-                        dbc.Row([
-                            dbc.Col(html.A("Cerrar sesión de Spotify", href="/logout_spotify", className="btn btn-danger mt-3"), width=12, className="text-center"),
-                            dbc.Col(dbc.Button("Generar Ticket tipo Álbum", id="generate-ticket-btn", color="info", className="mt-3"), width=12, className="text-center"),
-                            dbc.Col(html.Div(id="spotify-ticket"), width=12)
-                        ])
+                        dbc.Row([dbc.Col(generate_ticket_component(sp_client), width=12)])
                     ])
                 ], className="shadow mb-4"))
             ]),
