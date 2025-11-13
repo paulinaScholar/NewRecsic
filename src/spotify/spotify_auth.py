@@ -9,7 +9,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Configuración de scopes ---
-SPOTIPY_SCOPES = "user-top-read user-read-recently-played user-read-private user-read-currently-playing user-read-playback-state user-read-playback-position"  
+SPOTIPY_SCOPES = (
+    "user-top-read "
+    "user-read-recently-played "
+    "user-read-private "
+    "user-read-currently-playing "
+    "user-read-playback-state "
+    "user-read-playback-position "
+    "user-library-read "
+    "playlist-read-private "
+    "user-read-email"
+)
 
 # --- Función para obtener el objeto SpotifyOAuth ---
 def get_spotify_oauth():
