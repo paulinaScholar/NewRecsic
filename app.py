@@ -33,7 +33,12 @@ app = Dash(
 # Sessions flask server
 server = app.server
 
-server.secret_key = os.urandom(24)
+# server.secret_key = os.urandom(24)
+server.secret_key = os.getenv("SECRET_KEY")
+
+# Configure session behavior
+server.config["SESSION_TYPE"] = "filesystem"
+server.config["SESSION_FILE_DIR"] = "/tmp/flask_sessions"
 server.config["SESSION_PERMANENT"] = True
 server.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
 
