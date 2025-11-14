@@ -2,281 +2,207 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
-from flask import session
-from src.spotify import spotify_data
-import traceback
-# print("dashboard.py imported")
+import pandas as pd
+from .config import DATASET_PATH_1, DATASET_PATH_3
 
 
-# --------------------------------------------------------------------
-# Función de seguridad para obtener datos sin romper el dashboard
-# --------------------------------------------------------------------
-def safe_get(fn, sp, *args, **kwargs):
-    try:
-        return fn(sp, *args, **kwargs)
-    except Exception as e:
-        print(f"[dashboard] Error in {getattr(fn, '__name__', str(fn))}: {e}")
-        traceback.print_exc()
-        return None
+df_csv = pd.read_csv(DATASET_PATH_3)
+df_csv1 = pd.read_csv(DATASET_PATH_1)
 
 
-# --------------------------------------------------------------------
-# Figuras / Gráficos
-# --------------------------------------------------------------------
-def make_genres_figure(top_genres):
-    if not top_genres:
+def clean_dataframe(df, required_columns):
+    df_clean = df.copy()
+    if required_columns:
+        existing = [c for c in required_columns if c in df_clean.columns]
+        if existing:
+            df_clean = df_clean.dropna(subset=existing)
+    return df_clean
+
+
+def make_top_artists_figure(df):
+    artist_col = "artists" if "artists" in df.columns else "artist"
+    df_clean = clean_dataframe(df, [artist_col])
+    if df_clean.empty:
         return go.Figure()
-
-    names = [g.get("name", "") for g in top_genres]
-    values = [g.get("count", 0) for g in top_genres]
-
-    fig = px.pie(
-        names=names,
-        values=values,
-        title="Top Géneros",
-        hole=0.4,
-        color_discrete_sequence=px.colors.sequential.Blues
+    top_artists = df_clean[artist_col].value_counts().head(10)
+    fig = px.bar(
+        top_artists,
+        x=top_artists.index,
+        y=top_artists.values,
+        labels={"x": "Artista", "y": "Cantidad de canciones"},
+        title="Top 10 Artistas CSV"
     )
-
-    fig.update_layout(
-        margin=dict(l=10, r=10, t=40, b=10),
-        legend=dict(orientation="h", y=-0.15)
-    )
+    fig.update_layout(height=360)
     return fig
 
-
-def make_listening_days_graph(listening_days):
-    if not listening_days:
-        return go.Figure()
-
-    days = list(listening_days.keys())
-    counts = list(listening_days.values())
-
-    fig = go.Figure(data=[go.Bar(x=days, y=counts)])
-    fig.update_layout(
-        title="Hábitos musicales",
-        xaxis_title="Día",
-        yaxis_title="Canciones escuchadas",
-        height=360,
-        margin=dict(l=10, r=10, t=40, b=10)
-    )
-    return fig
-
-
-def make_heatmap(listening_hours):
-    if not listening_hours:
-        return go.Figure()
-
-    try:
-        fig = px.imshow(
-            listening_hours,
-            labels=dict(x="Hora", y="Día", color="Canciones"),
-            x=[f"{h}:00" for h in range(24)],
-            y=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"],
-            color_continuous_scale="Greens",
-            title="Mapa de calor de horas de escucha"
+def make_top_songs_list(df):
+    name_col = "name" if "name" in df.columns else None
+    artist_col = "artists" if "artists" in df.columns else ("artist" if "artist" in df.columns else None)
+    pop_col = "popularity" if "popularity" in df.columns else None
+    
+    required = [c for c in [name_col, artist_col, pop_col] if c]
+    df_clean = clean_dataframe(df, required)
+    
+    if df_clean.empty:
+        return html.P("No hay datos disponibles", className="text-white")
+    
+    # Eliminar duplicados
+    df_unique = df_clean.drop_duplicates(subset=[name_col, artist_col])
+    
+    # Top 10
+    top_songs = df_unique.nlargest(10, pop_col).reset_index(drop=True)
+    
+    items = []
+    for i, row in top_songs.iterrows():
+        items.append(
+            dbc.ListGroupItem(
+                [
+                    html.Strong(f"{i+1}. {row[name_col]}"),
+                    html.Span(f" — {row[artist_col]} (Popularidad: {row[pop_col]})", className="text-muted")
+                ],
+                className="bg-dark text-white border-secondary"
+            )
         )
+    return dbc.ListGroup(items, flush=True)
 
-        fig.update_layout(height=360, margin=dict(l=10, r=10, t=40, b=10))
-        return fig
+def make_danceability_energy_scatter(df):
+    dance_col = "danceability" if "danceability" in df.columns else None
+    energy_col = "energy" if "energy" in df.columns else None
+    name_col = "name" if "name" in df.columns else None
+    artist_col = "artists" if "artists" in df.columns else ("artist" if "artist" in df.columns else None)
+    size_col = "popularity" if "popularity" in df.columns else None
 
-    except Exception as e:
-        print("[dashboard] heatmap creation failed:", e)
-        traceback.print_exc()
+    df_clean = clean_dataframe(df, [dance_col, energy_col, size_col])
+    if df_clean.empty:
         return go.Figure()
+    
+    fig = px.scatter(
+        df_clean,
+        x=dance_col,
+        y=energy_col,
+        size=size_col,
+        color="valence" if "valence" in df_clean.columns else None,
+        hover_data=[col for col in [name_col, artist_col] if col in df_clean.columns],
+        title="Danceability vs Energy"
+    )
+    fig.update_layout(height=360)
+    return fig
 
+def make_duration_histogram(df):
+    if "duration_ms" not in df.columns:
+        return go.Figure()
+    fig = px.histogram(
+        df,
+        x="duration_ms",
+        nbins=20,
+        labels={"duration_ms": "Duración (ms)"},
+        title="Distribución de Duración de Canciones"
+    )
+    fig.update_layout(height=360)
+    return fig
 
-# --------------------------------------------------------------------
-# Tarjetas de estadísticas rápidas
-# --------------------------------------------------------------------
-def make_dashboard_cards(top_artist_today, monthly_listening, song_playcount):
+def make_dashboard_cards(df):
+    artist_col = "artists" if "artists" in df.columns else "artist"
+    df_clean = clean_dataframe(df, [artist_col, "popularity"])
+    if df_clean.empty:
+        return {"top_artist": None, "top_song": None, "avg_popularity": None, "total_songs": 0}
+    
+    top_artist = df_clean[artist_col].value_counts().idxmax()
+    top_song = df_clean.loc[df_clean["popularity"].idxmax()]["name"] if "name" in df_clean.columns else None
+    avg_popularity = round(df_clean["popularity"].mean(), 2)
+    total_songs = len(df_clean)
     return {
-        "artist_name": top_artist_today.get("artist") if top_artist_today else None,
-        "artist_minutes": top_artist_today.get("minutes") if top_artist_today else None,
-        "monthly_listening": monthly_listening or 0,
-        "song": song_playcount.get("song") if song_playcount else None,
-        "song_count": song_playcount.get("count") if song_playcount else None
+        "top_artist": top_artist,
+        "top_song": top_song,
+        "avg_popularity": avg_popularity,
+        "total_songs": total_songs
     }
 
 
-# --------------------------------------------------------------------
-# Iniciales para el círculo tipo vinilo
-# --------------------------------------------------------------------
-def artist_initials(name: str):
-    if not name:
-        return "??"
-    parts = name.split()
-    if len(parts) == 1:
-        return parts[0][:2].upper()
-    return (parts[0][0] + parts[-1][0]).upper()
+def make_mood_pie(df):
+    if "mood" not in df.columns:
+        return go.Figure()
+    mood_counts = df["mood"].value_counts()
+    fig = px.pie(
+        names=mood_counts.index,
+        values=mood_counts.values,
+        title="Distribución de emociones"
+    )
+    fig.update_layout(height=360)
+    return fig
 
-
-# --------------------------------------------------------------------
-# Tarjeta tipo ticket “Recsumen”
-# --------------------------------------------------------------------
-def generate_ticket_component(sp):
-
-    ticket = safe_get(spotify_data.get_ticket_data, sp) or {}
-
-    top_genres = ticket.get("top_genres") or safe_get(spotify_data.get_top_genres, sp) or []
-    top_artist_today = ticket.get("top_artist_today") or safe_get(spotify_data.get_top_artist_today, sp) or {}
-    song_playcount = ticket.get("song_playcount") or safe_get(spotify_data.get_song_playcount, sp) or {}
-    monthly_listening = ticket.get("monthly_listening") or safe_get(spotify_data.get_monthly_listening, sp) or 0
-    top_tracks = safe_get(spotify_data.get_recently_played, sp, 10) or []
-
-    table_rows = []
-    for idx, track in enumerate(top_tracks, start=1):
-        name = track.get("name", "Unknown")
-        artist = track.get("artist", "Unknown")
-
-        table_rows.append(
-            html.Tr([
-                html.Td(str(idx), style={"width": "6%", "fontWeight": "700"}),
-                html.Td([
-                    html.Div(name, style={"fontWeight": "600"}),
-                    html.Div(artist, style={"fontSize": "0.85rem", "color": "#bfbfbf"})
-                ]),
-                html.Td("", style={"width": "14%"})
-            ])
+def make_top_songs_by_condition(df, condition_col, condition_value, top_n=5):
+    if condition_col not in df.columns:
+        return html.P("Datos insuficientes", className="text-white")
+    df_cond = df[df[condition_col] == condition_value]
+    df_cond = df_cond.drop_duplicates(subset=["name", "artist"])
+    top_songs = df_cond.nlargest(top_n, "popularity") if "popularity" in df_cond.columns else df_cond.head(top_n)
+    
+    items = []
+    for i, row in top_songs.iterrows():
+        items.append(
+            dbc.ListGroupItem(
+                [
+                    html.Strong(f"{i+1}. {row['name']}"),
+                    html.Span(f" — {row['artist']} (Popularidad: {row.get('popularity', '—')})", className="text-muted")
+                ],
+                className="bg-dark text-white border-secondary"
+            )
         )
-
-    album_icon = html.Div(
-        artist_initials(top_artist_today.get("artist")),
-        style={
-            "width": "84px",
-            "height": "84px",
-            "borderRadius": "50%",
-            "backgroundColor": "#111",
-            "color": "white",
-            "display": "flex",
-            "alignItems": "center",
-            "justifyContent": "center",
-            "fontSize": "28px",
-            "fontWeight": "700",
-            "margin": "0 auto 10px auto",
-            "boxShadow": "0 6px 18px rgba(0,0,0,0.6)"
-        }
-    )
-
-    return dbc.Card(
-        dbc.CardBody([
-            html.Div([
-                album_icon,
-                html.H4("Recsumen", className="card-title text-center", style={"color": "white"}),
-
-                html.P(
-                    f"Artista del día: {top_artist_today.get('artist')} — {top_artist_today.get('minutes')} min"
-                    if top_artist_today.get("artist") else "Artista del día: —",
-                    style={"color": "#e8e8e8"}
-                ),
-                html.P(
-                    f"Top canción: '{song_playcount.get('song')}' — {song_playcount.get('count')} reproducciones"
-                    if song_playcount.get("song") else "Top canción: —",
-                    style={"color": "#e8e8e8"}
-                ),
-                html.P(
-                    "Top Géneros: " + (", ".join([g["name"] for g in top_genres]) if top_genres else "—"),
-                    style={"color": "#cfcfcf"}
-                ),
-
-                html.Hr(style={"borderColor": "#2b2b2b"}),
-
-                html.Table(
-                    [html.Thead(html.Tr([
-                        html.Th("QTY", style={"width": "6%"}),
-                        html.Th("ITEM"),
-                        html.Th("DUR.")
-                    ], style={"color": "#cfcfcf"}))] +
-                    table_rows +
-                    [html.Tr([
-                        html.Td("TOTAL", colSpan=2, style={"fontWeight": "700"}),
-                        html.Td(str(len(top_tracks)), style={"fontWeight": "700"})
-                    ])]
-                )
-            ], style={
-                "backgroundColor": "#121212",
-                "padding": "18px",
-                "borderRadius": "14px",
-                "boxShadow": "0 6px 20px rgba(0,0,0,0.7)"
-            })
-        ]),
-        className="m-2",
-        style={"border": "none"}
-    )
+    return dbc.ListGroup(items, flush=True)
 
 
-# --------------------------------------------------------------------
-# Layout del Dashboard
-# --------------------------------------------------------------------
 def dashboard_layout():
-    print("[dashboard] Building layout...")
+    # Dataset 3
+    cards = make_dashboard_cards(df_csv)
+    top_artists_fig = make_top_artists_figure(df_csv)
+    top_songs_list = make_top_songs_list(df_csv)
+    fig_dance_energy = make_danceability_energy_scatter(df_csv)
+    fig_duration = make_duration_histogram(df_csv)
 
-    # 🚨 CORREGIDO: ya no se pasa "session"
-    sp_client = get_spotify_client()
+    # Dataset 1
+    fig_mood = make_mood_pie(df_csv1)
+    top_happy_songs = make_top_songs_by_condition(df_csv1, "mood", "Happy")
+    top_energetic_songs = make_top_songs_by_condition(df_csv1, "energy", 0.7)  # suponiendo energy > 0.7
+    
+    return html.Div([
+        dbc.Container(fluid=True, className="p-3", children=[
+            html.H1("Dashboard de Canciones", className="text-white bg-dark p-3 rounded"),
 
-    if not sp_client:
-        print("[dashboard] No Spotify session detected ❌")
-        return dbc.Container([
-            html.H2("No has iniciado sesión con Spotify", className="text-center text-danger mt-5"),
-            dbc.Button("Iniciar sesión con Spotify", href="/login_spotify",
-                       color="success", className="d-block mx-auto mt-3")
+            # Tarjetas Dataset 3
+            dbc.Row([
+                dbc.Col(dbc.Card(dbc.CardBody([html.H5("Artista con más canciones"), html.P(cards["top_artist"] or "—")])), md=3),
+                dbc.Col(dbc.Card(dbc.CardBody([html.H5("Canción más popular"), html.P(cards["top_song"] or "—")])), md=3),
+                dbc.Col(dbc.Card(dbc.CardBody([html.H5("Promedio Popularidad"), html.P(str(cards["avg_popularity"]))])), md=3),
+                dbc.Col(dbc.Card(dbc.CardBody([html.H5("Total de canciones"), html.P(str(cards["total_songs"]))])), md=3)
+            ]),
+
+            html.Hr(),
+
+            # Gráficos Dataset 3
+            dbc.Row([
+                dbc.Col(dcc.Graph(figure=top_artists_fig), md=6),
+                dbc.Col(top_songs_list, md=6)
+            ]),
+            dbc.Row([
+                dbc.Col(dcc.Graph(figure=fig_dance_energy), md=6),
+                dbc.Col(dcc.Graph(figure=fig_duration), md=6)
+            ]),
+
+            html.Hr(),
+
+            # Dataset 1
+            dbc.Row([
+                dbc.Col(dcc.Graph(figure=fig_mood), md=6),
+                dbc.Col([
+                    html.H5("Top 5 Canciones Felices"),
+                    top_happy_songs,
+                    html.Hr(),
+                    html.H5("Top 5 Canciones Energéticas"),
+                    top_energetic_songs
+                ], md=6)
+            ]),
+
+            dbc.Button("Inicio", href="/", color="secondary", className="mt-4 d-block mx-auto")
         ])
-
-    print("[dashboard] Spotify session detected ✅")
-
-    ticket = safe_get(spotify_data.get_ticket_data, sp_client) or {}
-    top_genres = ticket.get("top_genres") or safe_get(spotify_data.get_top_genres, sp_client) or []
-    listening_days = safe_get(spotify_data.get_listening_days, sp_client) or {}
-    listening_hours = safe_get(spotify_data.get_listening_hours, sp_client)
-    top_artist_today = ticket.get("top_artist_today") or safe_get(spotify_data.get_top_artist_today, sp_client)
-    monthly_listening = ticket.get("monthly_listening") or safe_get(spotify_data.get_monthly_listening, sp_client)
-    song_playcount = ticket.get("song_playcount") or safe_get(spotify_data.get_song_playcount, sp_client)
-
-    genres_fig = make_genres_figure(top_genres)
-    listening_days_fig = make_listening_days_graph(listening_days)
-    heatmap_fig = make_heatmap(listening_hours)
-    cards = make_dashboard_cards(top_artist_today, monthly_listening, song_playcount)
-
-    return html.Div(
-        [
-            dbc.Container(fluid=True, className="p-3", children=[
-
-                html.H1("Spotify Dashboard", className="text-white bg-dark p-3 rounded"),
-
-                dbc.Row([
-                    dbc.Col(dcc.Graph(figure=genres_fig), md=6),
-                    dbc.Col(dcc.Graph(figure=listening_days_fig), md=6)
-                ]),
-
-                html.Hr(),
-
-                dbc.Row([dbc.Col(dcc.Graph(figure=heatmap_fig), md=12)]),
-
-                html.Hr(),
-
-                dbc.Row([
-                    dbc.Col(dbc.Card(dbc.CardBody([
-                        html.H5("Artista del día"),
-                        html.P(f"{cards['artist_name']} — {cards['artist_minutes']} min"
-                               if cards['artist_name'] else "—")
-                    ])), md=4),
-                    dbc.Col(dbc.Card(dbc.CardBody([
-                        html.H5("Escucha mensual"),
-                        html.P(f"{cards['monthly_listening']} minutos")
-                    ])), md=4),
-                    dbc.Col(dbc.Card(dbc.CardBody([
-                        html.H5("Canción más escuchada"),
-                        html.P(f"{cards['song']} — {cards['song_count']}"
-                               if cards['song'] else "—")
-                    ])), md=4)
-                ]),
-
-                html.Hr(),
-
-                generate_ticket_component(sp_client),
-
-                dbc.Button("Inicio", href="/", color="secondary", className="mt-3 d-block mx-auto")
-            ])
-        ],
-        style={"backgroundColor": "#0f0f0f", "minHeight": "100vh"}
-    )
+    ], style={"backgroundColor": "#0f0f0f", "minHeight": "100vh"})
