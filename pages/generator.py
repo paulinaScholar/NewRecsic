@@ -3,14 +3,14 @@ import dash, re, base64, json, uuid
 import dash_bootstrap_components as dbc
 import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
-from .config import DATASET_PATH_3
+from .config import DATASET_PATH_2
 from flask import session
 # from data_loader import load_dataset
 
 # DATASET_URL = "https://songs-dataset-space.atl1.digitaloceanspaces.com/universal_top_spotify_songs.csv"
-# df = pd.read_csv(DATASET_URL)
+df = pd.read_csv(DATASET_PATH_2)
 
-df = load_dataset()
+# df = load_dataset()
 
 metricas = [
     "danceability", "energy", "speechiness", "acousticness",
