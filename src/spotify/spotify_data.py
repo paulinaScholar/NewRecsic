@@ -1,57 +1,45 @@
 from .spotify_auth import get_spotify_client
 import datetime
-import random
 from dateutil import parser
 
-def get_listening_days():
-    sp = get_spotify_client()
+def get_listening_days(sp):
     results = sp.current_user_recently_played(limit=50)  
-    if results and "items" in results:
-        days_of_week = {0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday", 4: "Friday", 5: "Saturday", 6: "Sunday"}
-        listening_counts = {day: 0 for day in days_of_week.values()}
+    days_of_week = {0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday", 4: "Friday", 5: "Saturday", 6: "Sunday"}
+    listening_counts = {day: 0 for day in days_of_week.values()}
 
+    if results and "items" in results:
         for track in results["items"]:
-            played_at = track["played_at"]
-            # date_obj = datetime.datetime.strptime(played_at, "%Y-%m-%dT%H:%M:%S.%fZ")
-            date_obj = parser.isoparse(played_at)
-            day_of_week = date_obj.weekday()
+            played_at = parser.isoparse(track["played_at"])
+            day_of_week = played_at.weekday()
             listening_counts[days_of_week[day_of_week]] += 1
 
-        return listening_counts
-    return {}
+    return listening_counts
 
-def get_recently_played():
-    sp = get_spotify_client()
-    results = sp.current_user_recently_played(limit=5)
+def get_recently_played(sp, limit=5):
+    results = sp.current_user_recently_played(limit=limit)
+    tracks = []
     if results and "items" in results:
-        tracks = [
-            {
+        for track in results["items"]:
+            tracks.append({
                 "name": track["track"]["name"],
                 "artist": track["track"]["artists"][0]["name"],
                 "link": track["track"]["external_urls"]["spotify"]
-            }
-            for track in results["items"]
-        ]
-        return tracks
-    return []
+            })
+    return tracks
 
-def get_top_artists():
-    sp = get_spotify_client()
-    results = sp.current_user_top_artists(limit=5)
+def get_top_artists(sp, limit=5):
+    results = sp.current_user_top_artists(limit=limit)
+    artists = []
     if results and "items" in results:
-        artists = [
-            {
+        for artist in results["items"]:
+            artists.append({
                 "name": artist["name"],
                 "link": artist["external_urls"]["spotify"]
-            }
-            for artist in results["items"]
-        ]
-        return artists
-    return []
+            })
+    return artists
 
-def get_top_genres():
-    sp = get_spotify_client()
-    results = sp.current_user_top_artists(limit=20)  
+def get_top_genres(sp, limit=5):
+    results = sp.current_user_top_artists(limit=20)
     genre_count = {}
 
     if results and "items" in results:
@@ -59,122 +47,71 @@ def get_top_genres():
             for genre in artist["genres"]:
                 genre_count[genre] = genre_count.get(genre, 0) + 1
 
-        sorted_genres = sorted(genre_count.items(), key=lambda x: x[1], reverse=True)
-        return [{"name": genre, "count": count} for genre, count in sorted_genres[:5]]  # Top 5 géneros
+    sorted_genres = sorted(genre_count.items(), key=lambda x: x[1], reverse=True)
+    return [{"name": genre, "count": count} for genre, count in sorted_genres[:limit]]
 
-    return []
-
-def get_top_podcasts():
-    sp = get_spotify_client()
-    results = sp.current_user_top_artists(limit=10)  
-
-    podcasts = [
-        {"name": artist["name"], "link": artist["external_urls"]["spotify"]}
-        for artist in results["items"] if "podcast" in artist["genres"]
-    ]
-
-    return podcasts[:5] if podcasts else [{"name": "No podcast data available!", "link": "#"}]
-
-def search_track(track_name, limit=5):
-    sp = get_spotify_client()
-    results = sp.search(q=track_name, type="track", limit=limit)
-    tracks = results["tracks"]["items"]
-
-    if not tracks:
-        print("No se ha encontrado la cancion.")
-        return
-    
-    for idx, track in enumerate(tracks):
-        artists = ", ".join([artist["name"] for artist in track["artists"]])
-        print(f"{idx+1}. {track['name']} - {artists}")
-        print(f"   Spotify URL: {track['external_urls']['spotify']}")
-        print(f"   Album: {track['album']['name']}")
-        print("-" * 50)
-
-
-def get_listening_hours():
-    sp = get_spotify_client()
-    results = sp.current_user_recently_played(limit=50)
-    heatmap_data = [[0 for _ in range(24)] for _ in range(7)]  # 7 días x 24 horas
-
-    if results and "items" in results:
-        for track in results["items"]:
-            played_at = track["played_at"]
-            # date_obj = datetime.datetime.strptime(played_at, "%Y-%m-%dT%H:%M:%S.%fZ")
-            date_obj = parser.isoparse(played_at)
-            weekday = date_obj.weekday()  # 0 = Monday
-            hour = date_obj.hour
-            heatmap_data[weekday][hour] += 1
-
-    return heatmap_data
-
-def get_artist_daily_minutes(artist_name):
-    sp = get_spotify_client()
+def get_top_artist_today(sp):
     today = datetime.datetime.utcnow().date()
     results = sp.current_user_recently_played(limit=50)
-
-    total_minutes = 0
-    if results and "items" in results:
-        for track in results["items"]:
-            # played_at = datetime.datetime.strptime(track["played_at"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
-            played_at = parser.isoparse(track["played_at"]).date()
-            if played_at == today:
-                if any(artist_name.lower() in artist["name"].lower() for artist in track["track"]["artists"]):
-                    total_minutes += track["track"]["duration_ms"] / 60000  
-
-    return int(total_minutes)
-
-def get_monthly_listening():
-    sp = get_spotify_client()
-    now = datetime.datetime.utcnow()
-    current_month = now.month
-    results = sp.current_user_recently_played(limit=50)
-
-    total_minutes = 0
-    if results and "items" in results:
-        for track in results["items"]:
-            # played_at = datetime.datetime.strptime(track["played_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
-            played_at = parser.isoparse(track["played_at"])
-            if played_at.month == current_month:
-                total_minutes += track["track"]["duration_ms"] / 60000  
-
-    return int(total_minutes)
-
-
-def get_song_playcount():
-    sp = get_spotify_client()
-    results = sp.current_user_recently_played(limit=50)
-
-    playcount = {}
-    if results and "items" in results:
-        for track in results["items"]:
-            song_name = track["track"]["name"]
-            playcount[song_name] = playcount.get(song_name, 0) + 1
-
-        if playcount:
-            most_played = max(playcount.items(), key=lambda x: x[1])  # (canción, veces)
-            return {"song": most_played[0], "count": most_played[1]}
-
-    return {"song": None, "count": 0}
-
-def get_top_artist_today():
-    sp = get_spotify_client()
-    today = datetime.datetime.utcnow().date()
-    results = sp.current_user_recently_played(limit=50)
-
     artist_minutes = {}
 
     if results and "items" in results:
         for track in results["items"]:
-            # played_at = datetime.datetime.strptime(track["played_at"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
             played_at = parser.isoparse(track["played_at"]).date()
             if played_at == today:
                 for artist in track["track"]["artists"]:
                     name = artist["name"]
                     artist_minutes[name] = artist_minutes.get(name, 0) + (track["track"]["duration_ms"] / 60000)
 
-        if artist_minutes:
-            top_artist = max(artist_minutes.items(), key=lambda x: x[1])  # (artista, minutos)
-            return {"artist": top_artist[0], "minutes": int(top_artist[1])}
-
+    if artist_minutes:
+        top_artist = max(artist_minutes.items(), key=lambda x: x[1])
+        return {"artist": top_artist[0], "minutes": int(top_artist[1])}
     return {"artist": None, "minutes": 0}
+
+def get_monthly_listening(sp):
+    now = datetime.datetime.utcnow()
+    current_month = now.month
+    results = sp.current_user_recently_played(limit=50)
+    total_minutes = 0
+
+    if results and "items" in results:
+        for track in results["items"]:
+            played_at = parser.isoparse(track["played_at"])
+            if played_at.month == current_month:
+                total_minutes += track["track"]["duration_ms"] / 60000
+    return int(total_minutes)
+
+def get_song_playcount(sp):
+    results = sp.current_user_recently_played(limit=50)
+    playcount = {}
+
+    if results and "items" in results:
+        for track in results["items"]:
+            song_name = track["track"]["name"]
+            playcount[song_name] = playcount.get(song_name, 0) + 1
+
+    if playcount:
+        most_played = max(playcount.items(), key=lambda x: x[1])
+        return {"song": most_played[0], "count": most_played[1]}
+    return {"song": None, "count": 0}
+
+def get_listening_hours(sp):
+    results = sp.current_user_recently_played(limit=50)
+    heatmap_data = [[0 for _ in range(24)] for _ in range(7)]
+
+    if results and "items" in results:
+        for track in results["items"]:
+            played_at = parser.isoparse(track["played_at"])
+            weekday = played_at.weekday()
+            hour = played_at.hour
+            heatmap_data[weekday][hour] += 1
+
+    return heatmap_data
+
+def get_ticket_data(sp):
+    return {
+        "top_genres": get_top_genres(sp),
+        "top_artist_today": get_top_artist_today(sp),
+        "song_playcount": get_song_playcount(sp),
+        "monthly_listening": get_monthly_listening(sp)
+    }

@@ -34,8 +34,8 @@ app = Dash(
 # Sessions flask server
 server = app.server
 
-server.secret_key = os.urandom(24)
-# server.secret_key = os.getenv("SECRET_KEY")
+# server.secret_key = os.urandom(24)
+server.secret_key = os.getenv("SECRET_KEY")
 
 # Configure session behavior
 server.config["SESSION_TYPE"] = "filesystem"
