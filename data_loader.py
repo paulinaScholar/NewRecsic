@@ -2,6 +2,10 @@ import os
 import pandas as pd
 import boto3
 
+print("DEBUG: SPACES_KEY=", os.getenv("SPACES_KEY"))
+print("DEBUG: SPACES_BUCKET=", os.getenv("SPACES_BUCKET"))
+print("DEBUG: SPACES_FILE=", os.getenv("SPACES_FILE"))
+
 _cached_df = None
 
 def load_dataset():
