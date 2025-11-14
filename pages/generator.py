@@ -6,8 +6,9 @@ from sklearn.metrics.pairwise import euclidean_distances
 from .config import DATASET_PATH_3
 from flask import session
 
-df = pd.read_csv(DATASET_PATH_3)
-print(df.columns)
+DATASET_URL = "https://songs-dataset-space.atl1.digitaloceanspaces.com/universal_top_spotify_songs.csv"
+
+df = pd.read_csv(DATASET_URL)
 
 metricas = [
     "danceability", "energy", "speechiness", "acousticness",
