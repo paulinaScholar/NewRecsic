@@ -6,9 +6,7 @@ import pandas as pd
 from .config import DATASET_PATH_1, DATASET_PATH_2
 from flask import session
 
-# Dataset principal (dataset 2)
 df_main = pd.read_csv(DATASET_PATH_2)
-# Dataset secundario (dataset 1)
 df_csv1 = pd.read_csv(DATASET_PATH_1)
 
 
@@ -136,7 +134,6 @@ def make_mood_pie(df):
 
 
 def make_top_songs_by_condition(df, condition_col, condition_value, top_n=5):
-    # Revisamos columnas disponibles
     name_col = "trackName" if "trackName" in df.columns else ("name" if "name" in df.columns else None)
     artist_col = "artistName" if "artistName" in df.columns else ("artist" if "artist" in df.columns else None)
     pop_col = "msPlayed" if "msPlayed" in df.columns else "popularity"
@@ -144,7 +141,6 @@ def make_top_songs_by_condition(df, condition_col, condition_value, top_n=5):
     if not name_col or not artist_col or condition_col not in df.columns:
         return html.P("Datos insuficientes", className="text-white")
 
-    # Filtramos según la condición
     if condition_col == "energy":  # si es energy usamos > condición
         df_cond = df[df[condition_col] >= condition_value]
     else:
@@ -194,7 +190,7 @@ def dashboard_layout():
 
             html.Hr(),
 
-            # Gráficos dataset principal
+            # Graficoz dataset principal
             dbc.Row([
                 dbc.Col(dcc.Graph(figure=top_artists_fig), md=6),
                 dbc.Col(top_songs_list, md=6)
@@ -206,7 +202,7 @@ def dashboard_layout():
 
             html.Hr(),
 
-            # Dataset 1: emociones y top canciones
+            # Dataset 1 d emociones y top canciones
             dbc.Row([
                 dbc.Col(dcc.Graph(figure=fig_mood), md=6),
                 dbc.Col([
