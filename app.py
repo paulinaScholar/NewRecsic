@@ -3,7 +3,7 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 from pages.recommendations import recommendations_layout
 # from pages.home import home_layout
-from pages.dashboard import dashboard_layout
+# from pages.dashboard import dashboard_layout
 from pages.generator import generator_layout
 from pages.login import login_layout
 from pages.registro import registro_layout
@@ -62,8 +62,8 @@ def display_page(pathname):
     match pathname:
         case '/recommendations':
             return recommendations_layout 
-        case '/dashboard':
-                return dashboard_layout() 
+        # case '/dashboard':
+        #         return dashboard_layout()
         case '/generator':
               return generator_layout
         case '/login':

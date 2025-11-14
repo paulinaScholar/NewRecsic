@@ -3,16 +3,26 @@ import dash, re, base64, json, uuid
 import dash_bootstrap_components as dbc
 import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
-from .config import DATASET_PATH_2
+from .config import DATASET_PATH_3
 from flask import session
 
-df = pd.read_csv(DATASET_PATH_2)
+df = pd.read_csv(DATASET_PATH_3)
 
-metricas = ["danceability", "energy", "speechiness", "acousticness",
-            "instrumentalness", "liveness", "valence", "tempo"]
+metricas = [
+    "danceability", "energy", "speechiness", "acousticness",
+    "instrumentalness", "liveness", "valence", "tempo"
+]
 
 df = df.dropna(subset=metricas)
-df.drop_duplicates(inplace=True)
+
+cols_for_duplicates = [
+    "trackName", "artistName", "danceability","energy","key","loudness",
+    "mode","speechiness","acousticness","instrumentalness","liveness",
+    "valence","tempo"
+]
+
+# Drop rows where these columns are duplicated
+df = df.drop_duplicates(subset=cols_for_duplicates, keep="first")
 
 
 def recommend_by_metrics(usuario_input, exacto=False, top_n=11):
@@ -358,210 +368,6 @@ def update_generator(n_clicks, song_name, artist_name, danceability, energy, val
         responsive=True,
         className="mt-4"
     )
-
-    store_data = recomendaciones[["trackName", "artistName"]].to_dict("records")
-
-    return table, store_data
-
-# ------------------------------------
-# Callback para sliders
-# ------------------------------------
-@callback(
-    Output("slider-danceability", "value"),
-    Output("slider-energy", "value"),
-    Output("slider-valence", "value"),
-    Output("slider-tempo", "value"),
-    Input("song-input", "value"),
-    Input("artist-input", "value"),
-    prevent_initial_call=True
-)
-def update_sliders(song_name, artist_name):
-    if not song_name:
-        # Si no hay canción seleccionada, no cambiar los sliders
-        raise dash.exceptions.PreventUpdate
-
-    # Buscar la canción en el dataset
-    if artist_name:
-        song = df[
-            (df["trackName"].str.lower() == song_name.lower()) &
-            (df["artistName"].str.lower() == artist_name.lower())
-        ]
-    else:
-        song = df[df["trackName"].str.lower() == song_name.lower()]
-
-    if song.empty:
-        raise dash.exceptions.PreventUpdate
-
-    # Obtener las métricas de la canción seleccionada
-    song_data = song.iloc[0]
-    return (
-        float(song_data["danceability"]),
-        float(song_data["energy"]),
-        float(song_data["valence"]),
-        float(song_data["tempo"])
-    )
-
-
-# ------------------------------------
-# Callback para autocomplete canciones
-# ------------------------------------
-@callback(
-    Output("song-input", "value"),
-    Output("artist-input", "value"),
-    Output("track-suggestions", "children"),
-    Output("track-suggestions", "style"),
-    Input("song-input", "value"),
-    Input({"type": "track-suggestion", "index": ALL}, "n_clicks"),
-    State({"type": "track-suggestion", "index": ALL}, "id"),
-    prevent_initial_call=True,
-)
-def update_track_autocomplete(value, n_clicks, ids):
-    ctx = dash.callback_context
-    if not ctx.triggered:
-        raise dash.exceptions.PreventUpdate
-
-    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
-
-    #  Si se hace clic en una sugerencia
-    if "track-suggestion" in triggered_id:
-        if not any(n_clicks):
-            raise dash.exceptions.PreventUpdate
-        clicked_index = n_clicks.index(max(n_clicks))
-        selected = ids[clicked_index]["index"]
-
-        # Decodificar a base64 JSON para permitir caracteres especiales
-        try:
-            decoded = base64.urlsafe_b64decode(selected.encode()).decode()
-            data = json.loads(decoded)
-            track, artist = data.get("track", ""), data.get("artist", "")
-        except Exception:
-            track, artist = "", ""
-
-        return track, artist, [], {"display": "none"}
-
-    # Mientras el usuario escribe...
-    if not value:
-        return "", "", [], {"display": "none"}
-
-    # Escapar caracteres especiales del texto ingresado
-    song_value = re.escape(value.strip())
-
-    # Buscar coincidencias seguras por nombre de canción
-    matches = df[df["trackName"].astype(str).str.contains(song_value, case=False, na=False, regex=True)]
-
-    if matches.empty:
-        return value, "", [html.Li("Sin resultados", style={"padding": "8px", "color": "#777"})], {"display": "block"}
-
-    # Crear lista de sugerencias (con IDs codificados)
-    suggestions = []
-    for _, row in matches[["trackName", "artistName"]].dropna().head(6).iterrows():
-        track = row["trackName"]
-        artist = row["artistName"]
-
-        # Codificar la información como JSON base64
-        encoded_id = base64.urlsafe_b64encode(json.dumps({"track": track, "artist": artist}).encode()).decode()
-
-        suggestions.append(
-            html.Li(
-                f"{track} — {artist}",
-                n_clicks=0,
-                id={"type": "track-suggestion", "index": encoded_id},
-                style={
-                    "padding": "8px",
-                    "cursor": "pointer",
-                    "borderBottom": "1px solid #eee",
-                    "whiteSpace": "nowrap",
-                    "overflow": "hidden",
-                    "textOverflow": "ellipsis",
-                },
-                title=f"{track} — {artist}"  # Tooltip al pasar el mouse
-            )
-        )
-
-    return value, "", suggestions, {"display": "block"}
-
-# ---------------------------------
-# Callback para limpiar resultados
-# ---------------------------------
-@callback(
-    Output("song-input", "value", allow_duplicate=True),
-    Output("artist-input", "value", allow_duplicate=True),
-    Output("slider-danceability", "value", allow_duplicate=True),
-    Output("slider-energy", "value", allow_duplicate=True),
-    Output("slider-valence", "value", allow_duplicate=True),
-    Output("slider-tempo", "value", allow_duplicate=True),
-    Output("song-metrics", "children", allow_duplicate=True),
-    Output("generate-list", "children", allow_duplicate=True),
-    Input("clear-all", "n_clicks"),
-    prevent_initial_call=True,
-)
-def clear_all(n_clicks):
-    if not n_clicks:
-        raise dash.exceptions.PreventUpdate
-
-    # Reinicia todos los valores
-    return "", "", 0.5, 0.5, 0.5, 120, [], []
-
-# --------------------------------------
-# Callback para comprobar session activa
-# --------------------------------------
-@callback(
-    Output("save-list", "children"),
-    Input("generate-button", "n_clicks"),
-    prevent_initial_call=True
-)
-def show_save_button(n_clicks):
-    if "user_id" not in session:
-        return ""
-
-    return dbc.Button(
-                "💾 Guardar lista",
-                id="btn-saveList",
-                color="success",
-                className="btn-sm mb-2",
-                n_clicks=0
-            )
-
-# ---------------------------
-# Callback para guardar lista
-# ---------------------------
-@callback(
-    Output("save-toast", "is_open"),
-    Output("save-toast", "header"),
-    Output("save-toast", "icon"),
-    Input("btn-saveList", "n_clicks"),
-    State("recommendation-stored", "data"),
-    prevent_initial_call=True
-)
-def save_recommendations(n_clicks, data):
-    if not n_clicks:
-        raise dash.exceptions.PreventUpdate
-
-    # Verificar sesión activa
-    if "user_id" not in session:
-        return True, "Debes iniciar sesión para guardar tu lista", "warning"
-
-    # Verificar que haya datos
-    if not data:
-        return True, "No hay lista generada para guardar.", "secondary"
-
-    user_id = session["user_id"]
-    list_id = str(uuid.uuid4())
-
-    try:
-        from db import db_cursor
-        with db_cursor() as cur:
-            for row in data:
-                cur.execute("""
-                    INSERT INTO user_recommendations (user_id, track_name, artist_name, list_id)
-                    VALUES (%s, %s, %s, %s)
-                """, (user_id, row["trackName"], row["artistName"], list_id))
-
-        return True, "Tu lista se guardó correctamente", "success"
-
-    except Exception as e:
-        print("Error al guardar:", e)
-        return True, "Ocurrió un error al guardar la lista", "danger"
 
     store_data = recomendaciones[["trackName", "artistName"]].to_dict("records")
 
