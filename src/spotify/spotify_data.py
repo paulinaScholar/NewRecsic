@@ -1,117 +1,79 @@
-from .spotify_auth import get_spotify_client
-import datetime
-from dateutil import parser
+# src/spotify/spotify_data.py
+import traceback
 
-def get_listening_days(sp):
-    results = sp.current_user_recently_played(limit=50)  
-    days_of_week = {0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday", 4: "Friday", 5: "Saturday", 6: "Sunday"}
-    listening_counts = {day: 0 for day in days_of_week.values()}
+def safe_call(default):
+    """Decorador para evitar que un fallo rompa el dashboard."""
+    def decorator(fn):
+        def wrapper(sp, *args, **kwargs):
+            try:
+                return fn(sp, *args, **kwargs)
+            except Exception as e:
+                print(f"[spotify_data] Error en {fn.__name__}: {e}")
+                traceback.print_exc()
+                return default
+        return wrapper
+    return decorator
 
-    if results and "items" in results:
-        for track in results["items"]:
-            played_at = parser.isoparse(track["played_at"])
-            day_of_week = played_at.weekday()
-            listening_counts[days_of_week[day_of_week]] += 1
+# ---------------------------
+# 🎵 DATOS PÚBLICOS DE SPOTIFY
+# ---------------------------
 
-    return listening_counts
-
-def get_recently_played(sp, limit=5):
-    results = sp.current_user_recently_played(limit=limit)
+@safe_call([])
+def get_top_50_tracks_mexico(sp):
+    """Obtiene el Top 50 Canciones México desde playlist pública."""
+    playlist_id = "37i9dQZEVXbMXbN3EUUhlg"  # Top 50 México
+    data = sp.playlist_items(playlist_id, limit=50)
     tracks = []
-    if results and "items" in results:
-        for track in results["items"]:
-            tracks.append({
-                "name": track["track"]["name"],
-                "artist": track["track"]["artists"][0]["name"],
-                "link": track["track"]["external_urls"]["spotify"]
-            })
+
+    for item in data.get("items", []):
+        track = item.get("track", {})
+        tracks.append({
+            "name": track.get("name"),
+            "artists": ", ".join([a.get("name") for a in track.get("artists", [])]),
+            "popularity": track.get("popularity"),
+            "duration_ms": track.get("duration_ms"),
+            "album": track.get("album", {}).get("name"),
+            "release_date": track.get("album", {}).get("release_date")
+        })
     return tracks
 
-def get_top_artists(sp, limit=5):
-    results = sp.current_user_top_artists(limit=limit)
-    artists = []
-    if results and "items" in results:
-        for artist in results["items"]:
-            artists.append({
-                "name": artist["name"],
-                "link": artist["external_urls"]["spotify"]
-            })
-    return artists
+@safe_call([])
+def get_top_artists_global(sp, limit=50):
+    """Obtiene artistas más populares globalmente usando playlists públicas de Spotify Charts."""
+    playlist_id = "37i9dQZF1DXbMDoHDwVN2t"  # Global Top 50
+    data = sp.playlist_items(playlist_id, limit=limit)
+    artists_count = {}
+    
+    for item in data.get("items", []):
+        track = item.get("track", {})
+        for a in track.get("artists", []):
+            name = a.get("name")
+            if name:
+                artists_count[name] = artists_count.get(name, 0) + 1
 
-def get_top_genres(sp, limit=5):
-    results = sp.current_user_top_artists(limit=20)
-    genre_count = {}
+    top_artists = sorted(artists_count.items(), key=lambda x: x[1], reverse=True)
+    return [{"artist": a, "count": c} for a, c in top_artists[:limit]]
 
-    if results and "items" in results:
-        for artist in results["items"]:
-            for genre in artist["genres"]:
-                genre_count[genre] = genre_count.get(genre, 0) + 1
-
-    sorted_genres = sorted(genre_count.items(), key=lambda x: x[1], reverse=True)
-    return [{"name": genre, "count": count} for genre, count in sorted_genres[:limit]]
-
-def get_top_artist_today(sp):
-    today = datetime.datetime.utcnow().date()
-    results = sp.current_user_recently_played(limit=50)
-    artist_minutes = {}
-
-    if results and "items" in results:
-        for track in results["items"]:
-            played_at = parser.isoparse(track["played_at"]).date()
-            if played_at == today:
-                for artist in track["track"]["artists"]:
-                    name = artist["name"]
-                    artist_minutes[name] = artist_minutes.get(name, 0) + (track["track"]["duration_ms"] / 60000)
-
-    if artist_minutes:
-        top_artist = max(artist_minutes.items(), key=lambda x: x[1])
-        return {"artist": top_artist[0], "minutes": int(top_artist[1])}
-    return {"artist": None, "minutes": 0}
-
-def get_monthly_listening(sp):
-    now = datetime.datetime.utcnow()
-    current_month = now.month
-    results = sp.current_user_recently_played(limit=50)
-    total_minutes = 0
-
-    if results and "items" in results:
-        for track in results["items"]:
-            played_at = parser.isoparse(track["played_at"])
-            if played_at.month == current_month:
-                total_minutes += track["track"]["duration_ms"] / 60000
-    return int(total_minutes)
-
-def get_song_playcount(sp):
-    results = sp.current_user_recently_played(limit=50)
-    playcount = {}
-
-    if results and "items" in results:
-        for track in results["items"]:
-            song_name = track["track"]["name"]
-            playcount[song_name] = playcount.get(song_name, 0) + 1
-
-    if playcount:
-        most_played = max(playcount.items(), key=lambda x: x[1])
-        return {"song": most_played[0], "count": most_played[1]}
-    return {"song": None, "count": 0}
-
-def get_listening_hours(sp):
-    results = sp.current_user_recently_played(limit=50)
-    heatmap_data = [[0 for _ in range(24)] for _ in range(7)]
-
-    if results and "items" in results:
-        for track in results["items"]:
-            played_at = parser.isoparse(track["played_at"])
-            weekday = played_at.weekday()
-            hour = played_at.hour
-            heatmap_data[weekday][hour] += 1
-
-    return heatmap_data
-
+@safe_call({})
 def get_ticket_data(sp):
+    """
+    Regresa datos resumidos para el dashboard tipo 'Recsumen':
+    - Top 50 canciones México
+    - Top artistas globales
+    """
+    top_tracks = get_top_50_tracks_mexico(sp)
+    top_artists = get_top_artists_global(sp)
+    
+    # Datos resumidos para tarjetas
+    top_song = top_tracks[0]["name"] if top_tracks else None
+    top_song_artist = top_tracks[0]["artists"] if top_tracks else None
+
+    top_artist_count = top_artists[0]["artist"] if top_artists else None
+
     return {
-        "top_genres": get_top_genres(sp),
-        "top_artist_today": get_top_artist_today(sp),
-        "song_playcount": get_song_playcount(sp),
-        "monthly_listening": get_monthly_listening(sp)
+        "top_tracks": top_tracks,
+        "top_artists": top_artists,
+        "top_song": {"name": top_song, "artist": top_song_artist},
+        "top_artist": {"artist": top_artist_count}
     }
+
