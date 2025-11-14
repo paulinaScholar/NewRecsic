@@ -69,7 +69,7 @@ inicio_layout = dbc.Container(
                             className="lead",
                             style={"font-size": "1.3rem", "color": "#162447"}
                         ),
-                        dbc.Button("Comenzar", href="/dashboard", color="primary", className="mt-3 px-4 py-2 custom-button")
+                        dbc.Button("Comenzar", href="/perfil", color="primary", className="mt-3 px-4 py-2 custom-button")
                     ],
                     md=6,
                     className="text-md-start mb-4 mb-md-0"
@@ -164,7 +164,7 @@ inicio_layout = dbc.Container(
                                     ),
                                     dbc.Button(
                                         "Configurar",
-                                        href="/home",
+                                        href="/dashboard",
                                         color="primary",
                                         className="mt-2 w-100 custom-button"
                                     ),
