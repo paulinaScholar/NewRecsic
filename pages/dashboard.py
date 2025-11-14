@@ -3,11 +3,13 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-from .config import DATASET_PATH_2
+from .config import DATASET_PATH_1, DATASET_PATH_2
 from flask import session
 
-# Dataset principal
+# Dataset principal (dataset 2)
 df_main = pd.read_csv(DATASET_PATH_2)
+# Dataset secundario (dataset 1)
+df_csv1 = pd.read_csv(DATASET_PATH_1)
 
 
 def clean_dataframe(df, required_columns):
@@ -20,7 +22,7 @@ def clean_dataframe(df, required_columns):
 
 
 def make_top_artists_figure(df):
-    artist_col = "artistName"
+    artist_col = "artistName" if "artistName" in df.columns else "artist"
     df_clean = clean_dataframe(df, [artist_col])
     if df_clean.empty:
         return go.Figure()
@@ -37,11 +39,11 @@ def make_top_artists_figure(df):
 
 
 def make_top_songs_list(df):
-    name_col = "trackName"
-    artist_col = "artistName"
-    pop_col = "msPlayed"  # usamos msPlayed como popularidad
+    name_col = "trackName" if "trackName" in df.columns else "name"
+    artist_col = "artistName" if "artistName" in df.columns else "artist"
+    pop_col = "msPlayed" if "msPlayed" in df.columns else "popularity"
 
-    required = [name_col, artist_col, pop_col]
+    required = [c for c in [name_col, artist_col, pop_col] if c]
     df_clean = clean_dataframe(df, required)
 
     if df_clean.empty:
@@ -65,11 +67,11 @@ def make_top_songs_list(df):
 
 
 def make_danceability_energy_scatter(df):
-    dance_col = "danceability"
-    energy_col = "energy"
-    size_col = "msPlayed"
-    name_col = "trackName"
-    artist_col = "artistName"
+    dance_col = "danceability" if "danceability" in df.columns else None
+    energy_col = "energy" if "energy" in df.columns else None
+    size_col = "msPlayed" if "msPlayed" in df.columns else None
+    name_col = "trackName" if "trackName" in df.columns else "name"
+    artist_col = "artistName" if "artistName" in df.columns else "artist"
 
     df_clean = clean_dataframe(df, [dance_col, energy_col, size_col])
     if df_clean.empty:
@@ -81,7 +83,7 @@ def make_danceability_energy_scatter(df):
         y=energy_col,
         size=size_col,
         color="valence" if "valence" in df_clean.columns else None,
-        hover_data=[name_col, artist_col],
+        hover_data=[col for col in [name_col, artist_col] if col in df_clean.columns],
         title="Danceability vs Energy"
     )
     fig.update_layout(height=360)
@@ -103,7 +105,7 @@ def make_duration_histogram(df):
 
 
 def make_dashboard_cards(df):
-    artist_col = "artistName"
+    artist_col = "artistName" if "artistName" in df.columns else "artist"
     df_clean = clean_dataframe(df, [artist_col, "msPlayed"])
     if df_clean.empty:
         return {"top_artist": None, "top_song": None, "avg_popularity": None, "total_songs": 0}
@@ -134,19 +136,30 @@ def make_mood_pie(df):
 
 
 def make_top_songs_by_condition(df, condition_col, condition_value, top_n=5):
-    if condition_col not in df.columns:
+    # Revisamos columnas disponibles
+    name_col = "trackName" if "trackName" in df.columns else ("name" if "name" in df.columns else None)
+    artist_col = "artistName" if "artistName" in df.columns else ("artist" if "artist" in df.columns else None)
+    pop_col = "msPlayed" if "msPlayed" in df.columns else "popularity"
+
+    if not name_col or not artist_col or condition_col not in df.columns:
         return html.P("Datos insuficientes", className="text-white")
-    df_cond = df[df[condition_col] == condition_value]
-    df_cond = df_cond.drop_duplicates(subset=["trackName", "artistName"])
-    top_songs = df_cond.nlargest(top_n, "msPlayed") if "msPlayed" in df_cond.columns else df_cond.head(top_n)
+
+    # Filtramos según la condición
+    if condition_col == "energy":  # si es energy usamos > condición
+        df_cond = df[df[condition_col] >= condition_value]
+    else:
+        df_cond = df[df[condition_col] == condition_value]
+
+    df_cond = df_cond.drop_duplicates(subset=[name_col, artist_col])
+    top_songs = df_cond.nlargest(top_n, pop_col) if pop_col in df_cond.columns else df_cond.head(top_n)
 
     items = []
     for i, row in top_songs.iterrows():
         items.append(
             dbc.ListGroupItem(
                 [
-                    html.Strong(f"{i+1}. {row['trackName']}"),
-                    html.Span(f" — {row['artistName']} (Reproducciones: {row.get('msPlayed', '—')})", className="text-muted")
+                    html.Strong(f"{i+1}. {row[name_col]}"),
+                    html.Span(f" — {row[artist_col]} (Reproducciones: {row.get(pop_col, '—')})", className="text-muted")
                 ],
                 className="bg-dark text-white border-secondary"
             )
@@ -155,15 +168,17 @@ def make_top_songs_by_condition(df, condition_col, condition_value, top_n=5):
 
 
 def dashboard_layout():
-    # Dashboard principal
+    # Dataset principal
     cards = make_dashboard_cards(df_main)
     top_artists_fig = make_top_artists_figure(df_main)
     top_songs_list = make_top_songs_list(df_main)
     fig_dance_energy = make_danceability_energy_scatter(df_main)
     fig_duration = make_duration_histogram(df_main)
-    fig_mood = make_mood_pie(df_main)
-    top_happy_songs = make_top_songs_by_condition(df_main, "mood", "Happy")
-    top_energetic_songs = make_top_songs_by_condition(df_main, "energy", 0.7)  # energy > 0.7
+
+    # Dataset 1
+    fig_mood = make_mood_pie(df_csv1)
+    top_happy_songs = make_top_songs_by_condition(df_csv1, "mood", "Happy")
+    top_energetic_songs = make_top_songs_by_condition(df_csv1, "energy", 0.7)
 
     return html.Div([
         dbc.Container(fluid=True, className="p-3", children=[
@@ -179,7 +194,7 @@ def dashboard_layout():
 
             html.Hr(),
 
-            # Gráficos
+            # Gráficos dataset principal
             dbc.Row([
                 dbc.Col(dcc.Graph(figure=top_artists_fig), md=6),
                 dbc.Col(top_songs_list, md=6)
@@ -191,7 +206,7 @@ def dashboard_layout():
 
             html.Hr(),
 
-            # Top canciones por condición
+            # Dataset 1: emociones y top canciones
             dbc.Row([
                 dbc.Col(dcc.Graph(figure=fig_mood), md=6),
                 dbc.Col([
