@@ -7,6 +7,7 @@ from .config import DATASET_PATH_3
 from flask import session
 
 df = pd.read_csv(DATASET_PATH_3)
+print(df.columns)
 
 metricas = [
     "danceability", "energy", "speechiness", "acousticness",
