@@ -1,12 +1,10 @@
 from dash import html, dcc, callback, Input, Output, State, ALL, no_update
-import dash
+import dash, re, base64, json, uuid
 import dash_bootstrap_components as dbc
 import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
 from .config import DATASET_PATH_2
-import re
-import base64
-import json
+from flask import session
 
 df = pd.read_csv(DATASET_PATH_2)
 
@@ -58,6 +56,8 @@ generator_layout = dbc.Container([
     dbc.Row([
         dbc.Col(dbc.Card([
             dbc.CardBody([
+                dcc.Store(id="recommendation-stored"), # recomendations saved in temp memory
+
                 html.H1("🎶 Recomendador por Métricas", className="text-center mb-4"),
 
                 html.P("Busca una canción y revisa sus métricas:", className="text-center"),
@@ -200,6 +200,27 @@ generator_layout = dbc.Container([
 
                 html.Div(id="generate-list"),
 
+                html.Div(id="save-list", className="text-end mt-3"),
+                html.Div(
+                    [
+                        dbc.Toast(
+                            id="save-toast",
+                            header="Aviso",
+                            is_open=False,
+                            dismissable=True,
+                            duration=4000,
+                            icon="success",  # Se cambia dinámicamente
+                            style={
+                                "position": "fixed",
+                                "top": 20,
+                                "right": 20,
+                                "width": 300,
+                                "zIndex": 2000,
+                            },
+                        ),
+                    ]
+                ),
+
                 html.Hr(),
 
                 dbc.Row([
@@ -226,9 +247,9 @@ generator_layout = dbc.Container([
     ], className="mt-5 col-lg-8 justify-content-center")
 ], className="d-flex justify-content-center col-lg-8")
 
-# ----------------------------
+# ---------------------------------------------
 # Callback para mostrar métricas de la canción
-# ----------------------------
+# ---------------------------------------------
 @callback(
     Output("song-metrics", "children"),
     Input("search-song", "n_clicks"),
@@ -277,11 +298,12 @@ def show_song_metrics(n_clicks, song_name, artist_name):
         className="mt-3"
     )
 
-# ----------------------------
+# -----------------------------
 # Callback para recomendaciones
-# ----------------------------
+# -----------------------------
 @callback(
     Output("generate-list", "children"),
+    Output("recommendation-stored", "data"),
     Input("generate-button", "n_clicks"),
     State("song-input", "value"),
     State("artist-input", "value"),
@@ -289,11 +311,12 @@ def show_song_metrics(n_clicks, song_name, artist_name):
     State("slider-energy", "value"),
     State("slider-valence", "value"),
     State("slider-tempo", "value"),
-    State("exact-match", "value")
+    State("exact-match", "value"),
+    prevent_initial_call = True
 )
 def update_generator(n_clicks, song_name, artist_name, danceability, energy, valence, tempo, exact_match):
     if not n_clicks:
-        return []
+        return dash.exceptions.PreventUpdate
 
     usuario_input = {
         "trackName": song_name,
@@ -308,16 +331,17 @@ def update_generator(n_clicks, song_name, artist_name, danceability, energy, val
     recomendaciones = recommend_by_metrics(usuario_input, exacto=exacto)
 
     if recomendaciones.empty:
-        return dbc.Alert("⚠️ No se encontraron canciones con esos parámetros.",
+        alert = dbc.Alert("⚠️ No se encontraron canciones con esos parámetros.",
                          color="warning", className="text-center")
+        return alert, []
 
-    return dbc.Table(
+    table = dbc.Table(
         [
             html.Thead(html.Tr([
                 html.Th("Canción"), html.Th("Artista"),
                 html.Th("Danceability"), html.Th("Energy"),
                 html.Th("Valence"), html.Th("Tempo")
-            ])),
+            ],className="table-active")),
             html.Tbody([
                 html.Tr([
                     html.Td(row["trackName"]),
@@ -334,6 +358,11 @@ def update_generator(n_clicks, song_name, artist_name, danceability, energy, val
         responsive=True,
         className="mt-4"
     )
+
+    store_data = recomendaciones[["trackName", "artistName"]].to_dict("records")
+
+    return table, store_data
+
 # ------------------------------------
 # Callback para sliders
 # ------------------------------------
@@ -393,14 +422,14 @@ def update_track_autocomplete(value, n_clicks, ids):
 
     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
 
-    # 🖱️ Si se hace clic en una sugerencia
+    #  Si se hace clic en una sugerencia
     if "track-suggestion" in triggered_id:
         if not any(n_clicks):
             raise dash.exceptions.PreventUpdate
         clicked_index = n_clicks.index(max(n_clicks))
         selected = ids[clicked_index]["index"]
 
-        # 🔹 Decodificar el ID (base64 JSON)
+        # Decodificar a base64 JSON para permitir caracteres especiales
         try:
             decoded = base64.urlsafe_b64decode(selected.encode()).decode()
             data = json.loads(decoded)
@@ -410,7 +439,7 @@ def update_track_autocomplete(value, n_clicks, ids):
 
         return track, artist, [], {"display": "none"}
 
-    # ⌨️ Si el usuario está escribiendo
+    # Mientras el usuario escribe...
     if not value:
         return "", "", [], {"display": "none"}
 
@@ -429,7 +458,7 @@ def update_track_autocomplete(value, n_clicks, ids):
         track = row["trackName"]
         artist = row["artistName"]
 
-        # Codificar la información como JSON → base64
+        # Codificar la información como JSON base64
         encoded_id = base64.urlsafe_b64encode(json.dumps({"track": track, "artist": artist}).encode()).decode()
 
         suggestions.append(
@@ -445,7 +474,7 @@ def update_track_autocomplete(value, n_clicks, ids):
                     "overflow": "hidden",
                     "textOverflow": "ellipsis",
                 },
-                title=f"{track} — {artist}"  # 💡 Tooltip al pasar el mouse
+                title=f"{track} — {artist}"  # Tooltip al pasar el mouse
             )
         )
 
@@ -472,3 +501,64 @@ def clear_all(n_clicks):
 
     # Reinicia todos los valores
     return "", "", 0.5, 0.5, 0.5, 120, [], []
+
+# --------------------------------------
+# Callback para comprobar session activa
+# --------------------------------------
+@callback(
+    Output("save-list", "children"),
+    Input("generate-button", "n_clicks"),
+    prevent_initial_call=True
+)
+def show_save_button(n_clicks):
+    if "user_id" not in session:
+        return ""
+
+    return dbc.Button(
+                "💾 Guardar lista",
+                id="btn-saveList",
+                color="success",
+                className="btn-sm mb-2",
+                n_clicks=0
+            )
+
+# ---------------------------
+# Callback para guardar lista
+# ---------------------------
+@callback(
+    Output("save-toast", "is_open"),
+    Output("save-toast", "header"),
+    Output("save-toast", "icon"),
+    Input("btn-saveList", "n_clicks"),
+    State("recommendation-stored", "data"),
+    prevent_initial_call=True
+)
+def save_recommendations(n_clicks, data):
+    if not n_clicks:
+        raise dash.exceptions.PreventUpdate
+
+    # Verificar sesión activa
+    if "user_id" not in session:
+        return True, "Debes iniciar sesión para guardar tu lista", "warning"
+
+    # Verificar que haya datos
+    if not data:
+        return True, "No hay lista generada para guardar.", "secondary"
+
+    user_id = session["user_id"]
+    list_id = str(uuid.uuid4())
+
+    try:
+        from db import db_cursor
+        with db_cursor() as cur:
+            for row in data:
+                cur.execute("""
+                    INSERT INTO user_recommendations (user_id, track_name, artist_name, list_id)
+                    VALUES (%s, %s, %s, %s)
+                """, (user_id, row["trackName"], row["artistName"], list_id))
+
+        return True, "Tu lista se guardó correctamente", "success"
+
+    except Exception as e:
+        print("Error al guardar:", e)
+        return True, "Ocurrió un error al guardar la lista", "danger"

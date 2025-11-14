@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from src.spotify import spotify_data 
 import traceback
-print("dashboard.py imported")
+# print("dashboard.py imported")
 
 def safe_get(fn, *args, **kwargs):
     """Call a data function and return None on error (and log)."""

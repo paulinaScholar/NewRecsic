@@ -18,6 +18,7 @@ from flask import session
 from datetime import timedelta
 import os
 
+
 external_stylesheets = [
     dbc.themes.PULSE,
     "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
@@ -34,11 +35,16 @@ app = Dash(
 server = app.server
 
 server.secret_key = os.urandom(24)
+# server.secret_key = os.getenv("SECRET_KEY")
+
+# Configure session behavior
+server.config["SESSION_TYPE"] = "filesystem"
+server.config["SESSION_FILE_DIR"] = "/tmp/flask_sessions"
 server.config["SESSION_PERMANENT"] = True
 server.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
 
 # print("reached layout")
-# app.layout = html.Div("🚀 App started successfully")
+# app.layout = html.Div("App started successfully")
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False), 
@@ -57,7 +63,6 @@ def display_page(pathname):
         case '/recommendations':
             return recommendations_layout 
         case '/dashboard':
-                print("→ loading dashboard_layout()")
                 return dashboard_layout() 
         case '/generator':
               return generator_layout
@@ -87,5 +92,5 @@ except Exception as e:
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=False)
-    # app.run(debug=True)
+    # app.run(host="0.0.0.0", port=8080, debug=False) # Use for digital ocean
+    app.run(debug=True) # use for development
