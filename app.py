@@ -92,8 +92,10 @@ except Exception as e:
 
 
 if __name__ == "__main__":
+    # SOLO para desarrollo local
     app.run(
         host="0.0.0.0",
-        port=int(os.getenv("PORT", 8080)),
-        debug=False # Use for digital ocean
+        port=8080,
+        debug=True
+    )
     # app.run(debug=True) # use for development
