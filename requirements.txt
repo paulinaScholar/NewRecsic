@@ -23,7 +23,9 @@ psycopg2-binary==2.9.11
 bcrypt
 python-dotenv
 sqlalchemy
+boto3
 # pipreqs==0.5.0
+
 
 
 
