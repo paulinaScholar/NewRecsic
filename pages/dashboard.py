@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from .config import DATASET_PATH_1, DATASET_PATH_3
-
+from flask import session
 
 df_csv = pd.read_csv(DATASET_PATH_3)
 df_csv1 = pd.read_csv(DATASET_PATH_1)
