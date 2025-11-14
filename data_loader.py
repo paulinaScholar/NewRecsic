@@ -2,8 +2,13 @@ import os
 import pandas as pd
 import boto3
 
+_cached_df = None
 
 def load_dataset():
+    global _cached_df
+    if _cached_df is not None:
+        return _cached_df
+
     # ---- Load env variables ----
     SPACES_KEY = os.getenv("SPACES_KEY")
     SPACES_SECRET = os.getenv("SPACES_SECRET")
@@ -26,11 +31,13 @@ def load_dataset():
         aws_secret_access_key=SPACES_SECRET
     )
 
-    # ---- Download CSV (streaming, no se guarda en disco) ----
+    # ---- Download CSV (streaming) ----
     obj = client.get_object(Bucket=SPACES_BUCKET, Key=SPACES_FILE)
     stream = obj["Body"]
 
-    # ---- Fast CSV read ----
-    df = pd.read_csv(stream, engine="pyarrow")   # más rápido que el default
+    # ---- Read CSV ----
+    df = pd.read_csv(stream, engine="pyarrow")
 
+    # ---- Cache ----
+    _cached_df = df
     return df
