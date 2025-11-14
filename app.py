@@ -91,10 +91,6 @@ except Exception as e:
     print("Connection failed:", e)
 
 
-#if __name__ == "__main__":
-    # Solo para desarrollo local
- #   app.run(
-  #      host="0.0.0.0",
-   #     port=8080,
-    #    debug=True
-    #)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080, debug=False) # Use for digital ocean
+    # app.run(debug=True) # use for development
