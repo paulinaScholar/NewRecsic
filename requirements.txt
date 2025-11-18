@@ -24,7 +24,8 @@ bcrypt
 python-dotenv
 sqlalchemy
 boto3
-pipreqs==0.5.0
+# pipreqs==0.5.0
+
 
 
 
